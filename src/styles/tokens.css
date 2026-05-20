@@ -1,0 +1,70 @@
+/*
+ * ctOS NYC design tokens — the "Overlord" system (DESIGN.md sections 4, 5, 17).
+ * Every primitive styles itself from these custom properties only.
+ */
+:root {
+  /* Color — DESIGN.md section 4 */
+  --color-obsidian: #050608;
+  --color-carbon: #101317;
+  --color-gunmetal: #1b2026;
+  --color-slate: #2a3139;
+  --color-ash: #7d8792;
+  --color-whiteout: #e8eef2;
+  --color-blue-scan: #39c7f3;
+  --color-cyan-fog: #8eebff;
+  --color-acid-lime: #c8f23a;
+  --color-amber-risk: #f5b74a;
+  --color-red-lock: #ff3b30;
+  --color-violet-signal: #8b5cf6;
+
+  /* Radius */
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+
+  /* Border */
+  --border-thin: 1px;
+  --border-strong: 2px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Type families */
+  --font-sans: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+
+  /* Type scale — DESIGN.md section 5 (size / line height) */
+  --text-display-xl: 72px;
+  --leading-display-xl: 0.9;
+  --text-display-lg: 56px;
+  --leading-display-lg: 0.95;
+  --text-display-md: 40px;
+  --leading-display-md: 1;
+  --text-heading-lg: 28px;
+  --leading-heading-lg: 1.1;
+  --text-heading-md: 20px;
+  --leading-heading-md: 1.2;
+  --text-body-lg: 18px;
+  --leading-body-lg: 1.45;
+  --text-body-md: 15px;
+  --leading-body-md: 1.45;
+  --text-body-sm: 13px;
+  --leading-body-sm: 1.35;
+  --text-label: 11px;
+  --leading-label: 1.1;
+  --text-micro: 9px;
+  --leading-micro: 1;
+
+  /* Letter spacing */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-label: 0.08em;
+  --tracking-wide: 0.18em;
+}

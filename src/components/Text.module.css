@@ -1,0 +1,16 @@
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ash);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-cyan-fog);
+}

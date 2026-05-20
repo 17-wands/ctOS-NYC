@@ -20,6 +20,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/inter-tight": "^5.2.7",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },

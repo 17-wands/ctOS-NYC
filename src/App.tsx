@@ -1,4 +1,8 @@
+import { ComponentsSandbox } from './sandbox/ComponentsSandbox';
+
 export function App() {
+  const isSandbox = window.location.pathname === '/components';
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -6,7 +10,11 @@ export function App() {
         <span className="wordmark-region">NYC</span>
       </header>
       <main className="app-main">
-        <p className="status-line">SYSTEM ONLINE / ROUTE PLANNER STANDBY</p>
+        {isSandbox ? (
+          <ComponentsSandbox />
+        ) : (
+          <p className="status-line">SYSTEM ONLINE / ROUTE PLANNER STANDBY</p>
+        )}
       </main>
     </div>
   );
