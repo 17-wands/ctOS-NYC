@@ -200,6 +200,7 @@ and logs nothing identifying.
 | `maplibre-gl` | Interactive map | Open source; renders the dark basemap and route trace. |
 | `gtfs-realtime-bindings` | Protobuf parsing in the proxy | Server-side only, in the Edge Function. |
 | Map tile source | Basemap tiles | Must be **keyless** (e.g. OpenFreeMap, or a self-hosted Protomaps `.pmtiles` file) so no API key lands in a public repo. |
+| `@fontsource/*` | Self-hosted web fonts | Inter Tight and IBM Plex Mono are bundled locally via `@fontsource`; no third-party font CDN, consistent with the CSP in section 12. |
 
 ## 9. Tech stack and minimum versions
 

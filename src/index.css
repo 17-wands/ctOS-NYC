@@ -1,4 +1,4 @@
-:root {
+html {
   color-scheme: dark;
 }
 
@@ -16,9 +16,11 @@ body,
 
 body {
   margin: 0;
-  background-color: #050608;
-  color: #e8eef2;
-  font-family: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--color-obsidian);
+  color: var(--color-whiteout);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-md);
+  line-height: var(--leading-body-md);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -31,38 +33,39 @@ body {
 .app-header {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 16px 20px;
-  border-bottom: 1px solid #2a3139;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: var(--border-thin) solid var(--color-slate);
 }
 
 .wordmark {
-  font-size: 20px;
+  font-size: var(--text-heading-md);
   font-weight: 600;
-  letter-spacing: 0.02em;
-  color: #e8eef2;
+  line-height: var(--leading-heading-md);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-whiteout);
 }
 
 .wordmark-region {
-  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: #39c7f3;
+  color: var(--color-blue-scan);
 }
 
 .app-main {
-  display: flex;
   flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  padding: var(--space-6);
 }
 
 .status-line {
-  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.16em;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: #7d8792;
+  color: var(--color-ash);
 }
