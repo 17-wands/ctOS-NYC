@@ -36,6 +36,12 @@ test.describe('Trip planning', () => {
     await expect(page.getByText('ITINERARY')).toBeVisible();
     await expect(page.getByText('DEPART')).toBeVisible();
     await expect(page.getByText('ARRIVE')).toBeVisible();
+
+    const mapCanvas = page.locator('.maplibregl-canvas');
+    await expect(mapCanvas).toBeVisible({ timeout: 5000 });
+
+    const mapContainer = page.locator('[data-testid="map-container"]');
+    await expect(mapContainer).toBeVisible();
   });
 
   test('shows no routes found when no routes exist', async ({ page }) => {
