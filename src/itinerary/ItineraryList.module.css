@@ -27,6 +27,30 @@
   box-shadow: 0 0 0.75rem rgba(57, 199, 243, 0.3);
 }
 
+.item[data-severity='warning'] {
+  border-color: var(--color-amber-risk);
+}
+
+.item[data-severity='warning']:hover {
+  box-shadow: 0 0 0.5rem rgba(245, 183, 74, 0.2);
+}
+
+.item[data-severity='warning'][data-selected='true'] {
+  box-shadow: 0 0 0.75rem rgba(245, 183, 74, 0.3);
+}
+
+.item[data-severity='critical'] {
+  border-color: var(--color-red-lock);
+}
+
+.item[data-severity='critical']:hover {
+  box-shadow: 0 0 0.5rem rgba(255, 59, 48, 0.2);
+}
+
+.item[data-severity='critical'][data-selected='true'] {
+  box-shadow: 0 0 0.75rem rgba(255, 59, 48, 0.3);
+}
+
 .times {
   display: flex;
   gap: var(--space-2);

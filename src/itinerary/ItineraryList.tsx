@@ -1,11 +1,12 @@
 import type { Itinerary } from '../routing/types';
+import type { AnnotatedItinerary } from '../routing/disruptions';
 import { Label, Mono } from '../components/Text';
 import { formatTime, formatDuration } from '../routing/time';
 import styles from './ItineraryList.module.css';
 
 type ItineraryListProps = {
-  itineraries: Itinerary[];
-  onSelect: (itinerary: Itinerary) => void;
+  itineraries: (Itinerary | AnnotatedItinerary)[];
+  onSelect: (itinerary: Itinerary | AnnotatedItinerary) => void;
   selectedIndex?: number;
 };
 
@@ -25,6 +26,7 @@ export function ItineraryList({ itineraries, onSelect, selectedIndex }: Itinerar
           key={index}
           className={styles.item}
           data-selected={index === selectedIndex}
+          data-severity={'worstSeverity' in itinerary ? itinerary.worstSeverity : undefined}
           onClick={() => onSelect(itinerary)}
           type="button"
         >
