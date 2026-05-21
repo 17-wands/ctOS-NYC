@@ -1,0 +1,74 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  color: var(--color-ash);
+  cursor: pointer;
+  background-color: var(--color-carbon);
+  border: var(--border-thin) solid var(--color-slate);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.item:hover {
+  border-color: var(--color-blue-scan);
+  box-shadow: 0 0 0.5rem rgba(57, 199, 243, 0.2);
+}
+
+.item[data-selected='true'] {
+  border-color: var(--color-blue-scan);
+  box-shadow: 0 0 0.75rem rgba(57, 199, 243, 0.3);
+}
+
+.times {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.time {
+  font-size: var(--text-heading-sm);
+  color: var(--color-whiteout);
+}
+
+.arrow {
+  color: var(--color-blue-scan);
+}
+
+.meta {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.legs {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.route {
+  display: inline-flex;
+}
+
+.routeBadge {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-body-xs);
+  font-weight: var(--font-bold);
+  color: var(--color-carbon);
+  background-color: var(--color-blue-scan);
+  border-radius: var(--radius-xs);
+}
+
+.empty {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--color-ash);
+}

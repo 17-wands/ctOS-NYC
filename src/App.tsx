@@ -8,19 +8,41 @@ import {
   type TimetableBundle,
 } from './timetable';
 import { QueryPanel, type TripQuery } from './query';
+import { ItineraryList, ItineraryPanel } from './itinerary';
+import { extractItineraries, type Itinerary } from './routing';
 
 type LoadState =
   | { kind: 'loading'; stage: LoadStage }
   | { kind: 'ready'; bundle: TimetableBundle }
   | { kind: 'error'; error: Error };
 
+type RoutingState =
+  | { kind: 'idle' }
+  | { kind: 'computing' }
+  | { kind: 'results'; itineraries: Itinerary[]; selectedIndex: number | undefined };
+
 export function App() {
   const isSandbox = window.location.pathname === '/components';
   const [state, setState] = useState<LoadState>({ kind: 'loading', stage: 'fetch' });
+  const [routingState, setRoutingState] = useState<RoutingState>({ kind: 'idle' });
 
-  const handleQuerySubmit = (query: TripQuery) => {
-    // TODO: Implement routing in issue #5
-    console.log('Query submitted:', query);
+  const handleQuerySubmit = (query: TripQuery, bundle: TimetableBundle) => {
+    setRoutingState({ kind: 'computing' });
+
+    try {
+      const itineraries = extractItineraries(bundle.router, query);
+      setRoutingState({ kind: 'results', itineraries, selectedIndex: undefined });
+    } catch (error) {
+      console.error('Routing failed:', error);
+      setRoutingState({ kind: 'idle' });
+    }
+  };
+
+  const handleItinerarySelect = (itinerary: Itinerary) => {
+    if (routingState.kind === 'results') {
+      const selectedIndex = routingState.itineraries.indexOf(itinerary);
+      setRoutingState({ ...routingState, selectedIndex });
+    }
   };
 
   useEffect(() => {
@@ -54,7 +76,9 @@ export function App() {
         <span className="wordmark">ctOS</span>
         <span className="wordmark-region">NYC</span>
       </header>
-      <main className="app-main">{renderMain(isSandbox, state, handleQuerySubmit)}</main>
+      <main className="app-main">
+        {renderMain(isSandbox, state, routingState, handleQuerySubmit, handleItinerarySelect)}
+      </main>
     </div>
   );
 }
@@ -62,10 +86,36 @@ export function App() {
 function renderMain(
   isSandbox: boolean,
   state: LoadState,
-  onQuerySubmit: (query: TripQuery) => void,
+  routingState: RoutingState,
+  onQuerySubmit: (query: TripQuery, bundle: TimetableBundle) => void,
+  onItinerarySelect: (itinerary: Itinerary) => void,
 ) {
   if (isSandbox) return <ComponentsSandbox />;
   if (state.kind === 'loading') return <BootSequence stage={state.stage} />;
   if (state.kind === 'error') return <ErrorState error={state.error} />;
-  return <QueryPanel bundle={state.bundle} onQuerySubmit={onQuerySubmit} />;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <QueryPanel
+        bundle={state.bundle}
+        onQuerySubmit={(query) => onQuerySubmit(query, state.bundle)}
+      />
+      {routingState.kind === 'computing' && (
+        <div style={{ padding: '1rem', color: 'var(--color-blue-scan)' }}>COMPUTING ROUTES...</div>
+      )}
+      {routingState.kind === 'results' && (
+        <>
+          <ItineraryList
+            itineraries={routingState.itineraries}
+            onSelect={onItinerarySelect}
+            selectedIndex={routingState.selectedIndex}
+          />
+          {routingState.selectedIndex !== undefined &&
+            routingState.itineraries[routingState.selectedIndex] && (
+              <ItineraryPanel itinerary={routingState.itineraries[routingState.selectedIndex]!} />
+            )}
+        </>
+      )}
+    </div>
+  );
 }
