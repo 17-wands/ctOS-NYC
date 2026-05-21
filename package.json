@@ -24,6 +24,7 @@
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@fontsource/inter-tight": "^5.2.7",
+    "gtfs-realtime-bindings": "^1.1.1",
     "maplibre-gl": "^5.24.0",
     "minotor": "^11.2.3",
     "react": "^18.0.0",
