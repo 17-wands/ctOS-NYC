@@ -7,6 +7,7 @@ import {
   type LoadStage,
   type TimetableBundle,
 } from './timetable';
+import { QueryPanel, type TripQuery } from './query';
 
 type LoadState =
   | { kind: 'loading'; stage: LoadStage }
@@ -16,6 +17,11 @@ type LoadState =
 export function App() {
   const isSandbox = window.location.pathname === '/components';
   const [state, setState] = useState<LoadState>({ kind: 'loading', stage: 'fetch' });
+
+  const handleQuerySubmit = (query: TripQuery) => {
+    // TODO: Implement routing in issue #5
+    console.log('Query submitted:', query);
+  };
 
   useEffect(() => {
     if (isSandbox) return;
@@ -48,14 +54,18 @@ export function App() {
         <span className="wordmark">ctOS</span>
         <span className="wordmark-region">NYC</span>
       </header>
-      <main className="app-main">{renderMain(isSandbox, state)}</main>
+      <main className="app-main">{renderMain(isSandbox, state, handleQuerySubmit)}</main>
     </div>
   );
 }
 
-function renderMain(isSandbox: boolean, state: LoadState) {
+function renderMain(
+  isSandbox: boolean,
+  state: LoadState,
+  onQuerySubmit: (query: TripQuery) => void,
+) {
   if (isSandbox) return <ComponentsSandbox />;
   if (state.kind === 'loading') return <BootSequence stage={state.stage} />;
   if (state.kind === 'error') return <ErrorState error={state.error} />;
-  return <p className="status-line">SYSTEM ONLINE / ROUTE PLANNER STANDBY</p>;
+  return <QueryPanel bundle={state.bundle} onQuerySubmit={onQuerySubmit} />;
 }
