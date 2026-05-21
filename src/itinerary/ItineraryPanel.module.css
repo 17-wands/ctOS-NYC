@@ -1,0 +1,97 @@
+.legs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.leg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.leg[data-leg-type='vehicle'] {
+  padding: var(--space-3);
+  background-color: rgba(57, 199, 243, 0.05);
+  border: var(--border-thin) solid var(--color-blue-scan);
+  border-radius: var(--radius-sm);
+}
+
+.leg[data-leg-type='transfer'] {
+  padding: var(--space-2);
+  border-left: var(--border-medium) solid var(--color-amber-risk);
+}
+
+.leg[data-leg-type='access'] {
+  padding: var(--space-2);
+  border-left: var(--border-medium) solid var(--color-ash);
+}
+
+.legHeader {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.routeBadge {
+  padding: var(--space-1) var(--space-2);
+  font-weight: var(--font-bold);
+  color: var(--color-carbon);
+  background-color: var(--color-blue-scan);
+  border-radius: var(--radius-xs);
+}
+
+.legRoute {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+}
+
+.stop {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.time {
+  min-width: 4rem;
+  color: var(--color-whiteout);
+}
+
+.stopName {
+  color: var(--color-whiteout);
+}
+
+.connector {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding-left: var(--space-2);
+}
+
+.line {
+  width: var(--border-medium);
+  height: var(--space-4);
+  background-color: var(--color-blue-scan);
+}
+
+.transfer {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.transferPath {
+  color: var(--color-ash);
+}
+
+.access {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.accessPath {
+  color: var(--color-ash);
+}
