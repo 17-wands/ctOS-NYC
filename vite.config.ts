@@ -21,5 +21,10 @@ export default defineConfig({
     mockReset: true,
     restoreMocks: true,
     unstubGlobals: true,
+    server: {
+      deps: {
+        inline: ['maplibre-gl'],
+      },
+    },
   },
 });

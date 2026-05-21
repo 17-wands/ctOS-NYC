@@ -10,6 +10,7 @@ import {
 import { QueryPanel, type TripQuery } from './query';
 import { ItineraryList, ItineraryPanel } from './itinerary';
 import { extractItineraries, type Itinerary } from './routing';
+import { Map } from './map';
 
 type LoadState =
   | { kind: 'loading'; stage: LoadStage }
@@ -112,7 +113,13 @@ function renderMain(
           />
           {routingState.selectedIndex !== undefined &&
             routingState.itineraries[routingState.selectedIndex] && (
-              <ItineraryPanel itinerary={routingState.itineraries[routingState.selectedIndex]!} />
+              <>
+                <Map
+                  itinerary={routingState.itineraries[routingState.selectedIndex]!}
+                  stopsIndex={state.bundle.stopsIndex}
+                />
+                <ItineraryPanel itinerary={routingState.itineraries[routingState.selectedIndex]!} />
+              </>
             )}
         </>
       )}
