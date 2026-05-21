@@ -1,0 +1,2 @@
+route_id,agency_id,route_short_name,route_long_name,route_type
+1,MTA,1,Broadway - 7 Avenue Local,1

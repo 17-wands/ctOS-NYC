@@ -1,0 +1,88 @@
+.stages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: var(--space-3) minmax(8rem, 12rem) 1fr auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-thin) solid var(--color-slate);
+}
+
+.stage:last-child {
+  border-bottom: 0;
+}
+
+.marker {
+  width: var(--space-2);
+  height: var(--space-2);
+  background-color: var(--color-slate);
+  border-radius: var(--radius-sm);
+  align-self: center;
+}
+
+.stage[data-state='done'] .marker {
+  background-color: var(--color-acid-lime);
+}
+
+.stage[data-state='active'] .marker {
+  background-color: var(--color-blue-scan);
+  /* Pulse — DESIGN.md §10 mechanical easing */
+  animation: scan-pulse 800ms steps(2, end) infinite;
+}
+
+.code {
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.stage[data-state='pending'] .code,
+.stage[data-state='pending'] .detail {
+  opacity: 0.5;
+}
+
+.detail {
+  color: var(--color-ash);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm);
+}
+
+.state {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ash);
+}
+
+.stage[data-state='done'] .state {
+  color: var(--color-acid-lime);
+}
+
+.stage[data-state='active'] .state {
+  color: var(--color-blue-scan);
+}
+
+@keyframes scan-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage[data-state='active'] .marker {
+    animation: none;
+  }
+}

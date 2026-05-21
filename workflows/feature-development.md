@@ -22,6 +22,22 @@ reprioritizes. See `WORKFLOW.md` in the project root for the full workspace mani
 - `enforcement: optional` — use at team discretion
 - `alternatives` — acceptable substitutes when the primary tool is unavailable
 
+## Branch hygiene
+
+- **One branch per issue.** Branches use `issue-XX-short-description` and start
+  from the latest `main`. After every merge, fast-forward `main` and branch
+  fresh; do not pile work from one issue onto a branch named for another.
+- **Keep branches short-lived.** A branch that accumulates work beyond what a
+  reviewer can read in one sitting — roughly several hundred lines beyond the
+  lockfile, or more than about half a day of effort — is a signal to slice the
+  issue into multiple PRs.
+- **Slice large issues into multiple PRs.** Each PR must be independently
+  shippable: tests pass, build succeeds, `npm run validate` is clean. Every PR
+  links the issue and states explicitly whether it closes it. The issue closes
+  when the last slice merges.
+- **Push early; do not stockpile commits locally.** A branch that is committed
+  but not pushed is a branch the team cannot see or review.
+
 ---
 
 ## Steps
@@ -52,7 +68,7 @@ workflow:
           alternatives: []
       actor: either
       enforcement: required
-      notes: "Do not skip ahead in the backlog unless the human explicitly reprioritizes."
+      notes: "Do not skip ahead in the backlog unless the human explicitly reprioritizes. Branch from the latest main; see Branch hygiene above."
 
     - id: inspect-context
       name: Inspect Code and Docs
@@ -178,7 +194,7 @@ workflow:
           alternatives: ["GitHub web"]
       actor: either
       enforcement: required
-      notes: "Link the issue. Add screenshots for UI changes. The PR body is the change summary."
+      notes: "Link the issue. State whether the PR closes it or is one slice of several. Add screenshots for UI changes. The PR body is the change summary. See Branch hygiene above before opening a PR that exceeds a few hundred lines of new code."
 
     - id: review-merge
       name: Review and Merge
