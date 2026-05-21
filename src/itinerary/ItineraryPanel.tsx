@@ -1,15 +1,18 @@
 import type { Itinerary } from '../routing/types';
 import type { AnnotatedItinerary } from '../routing/disruptions';
 import { Panel } from '../components/Panel';
+import { Button } from '../components/Button';
 import { Label, Mono } from '../components/Text';
 import { formatTime, formatDuration } from '../routing/time';
 import styles from './ItineraryPanel.module.css';
 
 type ItineraryPanelProps = {
   itinerary: Itinerary | AnnotatedItinerary;
+  onExcludeRoute?: (routeShortName: string) => void;
+  excludedRoutes?: Set<string>;
 };
 
-export function ItineraryPanel({ itinerary }: ItineraryPanelProps) {
+export function ItineraryPanel({ itinerary, onExcludeRoute, excludedRoutes }: ItineraryPanelProps) {
   const severity =
     'worstSeverity' in itinerary && itinerary.worstSeverity
       ? itinerary.worstSeverity
@@ -35,8 +38,21 @@ export function ItineraryPanel({ itinerary }: ItineraryPanelProps) {
                 </div>
                 {'disruption' in leg && leg.disruption && (
                   <div className={styles.disruption} data-severity={leg.disruption.severity}>
-                    <Label>{leg.disruption.severity === 'critical' ? 'BREACH' : 'DEGRADED'}</Label>
-                    <Mono>{leg.disruption.alerts[0]?.header || 'Service disruption'}</Mono>
+                    <div className={styles.disruptionHeader}>
+                      <Label>
+                        {leg.disruption.severity === 'critical' ? 'BREACH' : 'DEGRADED'}
+                      </Label>
+                      <Mono>{leg.disruption.alerts[0]?.header || 'Service disruption'}</Mono>
+                    </div>
+                    {leg.routeShortName && onExcludeRoute && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => onExcludeRoute(leg.routeShortName!)}
+                        disabled={excludedRoutes?.has(leg.routeShortName)}
+                      >
+                        EXCLUDE {leg.routeShortName}
+                      </Button>
+                    )}
                   </div>
                 )}
                 <div className={styles.legRoute}>

@@ -1,0 +1,20 @@
+.banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  background: rgba(245, 183, 74, 0.1);
+  border: var(--border-thin) solid var(--color-amber-risk);
+  border-radius: var(--radius-sm);
+  gap: var(--space-3);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.excluded {
+  color: var(--color-whiteout);
+}
