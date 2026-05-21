@@ -1,0 +1,106 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.label {
+  display: block;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-whiteout);
+  background-color: var(--color-carbon);
+  border: 1px solid var(--color-slate);
+  border-radius: 0;
+  outline: none;
+  transition: border-color 120ms linear;
+}
+
+.input:focus {
+  border-color: var(--color-blue-scan);
+}
+
+.input[data-error='true'] {
+  border-color: var(--color-red-lock);
+}
+
+.input::placeholder {
+  color: var(--color-ash);
+}
+
+.selectedId {
+  margin-top: -4px;
+  font-size: 13px;
+  color: var(--color-ash);
+}
+
+.error {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-red-lock);
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin-top: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  background-color: var(--color-carbon);
+  border: 1px solid var(--color-slate);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.option {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: var(--color-whiteout);
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms linear;
+  border-bottom: 1px solid var(--color-gunmetal);
+}
+
+.option:last-child {
+  border-bottom: none;
+}
+
+.option:hover,
+.option[data-selected='true'] {
+  background-color: rgba(57, 199, 243, 0.1); /* blue-scan at 10% opacity */
+}
+
+.optionName {
+  flex: 1;
+}
+
+.noResults {
+  padding: 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-ash);
+  text-align: center;
+}
