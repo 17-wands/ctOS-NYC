@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { ComponentsSandbox } from './sandbox/ComponentsSandbox';
 import {
   BootSequence,
@@ -9,8 +9,13 @@ import {
 } from './timetable';
 import { QueryPanel, type TripQuery } from './query';
 import { ItineraryList, ItineraryPanel } from './itinerary';
-import { extractItineraries, type Itinerary } from './routing';
+import { extractItineraries } from './routing';
 import { Map } from './map';
+import { fetchRealtimeData } from './realtime/client';
+import { annotateItinerary } from './routing/matcher';
+import type { RealtimeResponse } from './realtime/types';
+import type { Itinerary } from './routing';
+import type { AnnotatedItinerary } from './routing/disruptions';
 
 type LoadState =
   | { kind: 'loading'; stage: LoadStage }
@@ -22,10 +27,17 @@ type RoutingState =
   | { kind: 'computing' }
   | { kind: 'results'; itineraries: Itinerary[]; selectedIndex: number | undefined };
 
+type RealtimeState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'loaded'; data: RealtimeResponse }
+  | { kind: 'error' };
+
 export function App() {
   const isSandbox = window.location.pathname === '/components';
   const [state, setState] = useState<LoadState>({ kind: 'loading', stage: 'fetch' });
   const [routingState, setRoutingState] = useState<RoutingState>({ kind: 'idle' });
+  const [realtimeState, setRealtimeState] = useState<RealtimeState>({ kind: 'idle' });
 
   const handleQuerySubmit = (query: TripQuery, bundle: TimetableBundle) => {
     setRoutingState({ kind: 'computing' });
@@ -71,6 +83,46 @@ export function App() {
     };
   }, [isSandbox]);
 
+  // Start polling realtime data when timetable is ready
+  useEffect(() => {
+    if (state.kind !== 'ready') return;
+
+    let cancelled = false;
+
+    const poll = async () => {
+      const data = await fetchRealtimeData();
+      if (cancelled) return;
+
+      if (data) {
+        setRealtimeState({ kind: 'loaded', data });
+      } else {
+        setRealtimeState({ kind: 'error' });
+      }
+    };
+
+    // Initial fetch
+    poll();
+
+    // Poll every 60s
+    const interval = setInterval(poll, 60000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [state]);
+
+  // Annotate itineraries when realtime data updates
+  const annotatedItineraries = useMemo(() => {
+    if (routingState.kind !== 'results' || realtimeState.kind !== 'loaded') {
+      return routingState.kind === 'results' ? routingState.itineraries : [];
+    }
+
+    return routingState.itineraries.map((itinerary) =>
+      annotateItinerary(itinerary, realtimeState.data),
+    );
+  }, [routingState, realtimeState]);
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -78,7 +130,14 @@ export function App() {
         <span className="wordmark-region">NYC</span>
       </header>
       <main className="app-main">
-        {renderMain(isSandbox, state, routingState, handleQuerySubmit, handleItinerarySelect)}
+        {renderMain(
+          isSandbox,
+          state,
+          routingState,
+          annotatedItineraries,
+          handleQuerySubmit,
+          handleItinerarySelect,
+        )}
       </main>
     </div>
   );
@@ -88,6 +147,7 @@ function renderMain(
   isSandbox: boolean,
   state: LoadState,
   routingState: RoutingState,
+  annotatedItineraries: (Itinerary | AnnotatedItinerary)[],
   onQuerySubmit: (query: TripQuery, bundle: TimetableBundle) => void,
   onItinerarySelect: (itinerary: Itinerary) => void,
 ) {
@@ -107,18 +167,18 @@ function renderMain(
       {routingState.kind === 'results' && (
         <>
           <ItineraryList
-            itineraries={routingState.itineraries}
+            itineraries={annotatedItineraries}
             onSelect={onItinerarySelect}
             selectedIndex={routingState.selectedIndex}
           />
           {routingState.selectedIndex !== undefined &&
-            routingState.itineraries[routingState.selectedIndex] && (
+            annotatedItineraries[routingState.selectedIndex] && (
               <>
                 <Map
-                  itinerary={routingState.itineraries[routingState.selectedIndex]!}
+                  itinerary={annotatedItineraries[routingState.selectedIndex]!}
                   stopsIndex={state.bundle.stopsIndex}
                 />
-                <ItineraryPanel itinerary={routingState.itineraries[routingState.selectedIndex]!} />
+                <ItineraryPanel itinerary={annotatedItineraries[routingState.selectedIndex]!} />
               </>
             )}
         </>
