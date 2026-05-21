@@ -27,10 +27,10 @@ workspace:
       file: workflows/feature-development.md
       description: Issue-driven development from the GitHub backlog to a merged PR
       tags: [dev, github, issues, testing, claude-code]
-      tokens: 1724
+      tokens: 1880
 ```
 
 ## Workflow Index
 
-- **[Feature Development](workflows/feature-development.md)** — Issue-driven development from the GitHub backlog to a merged PR *(≈1,724 tokens)*
+- **[Feature Development](workflows/feature-development.md)** — Issue-driven development from the GitHub backlog to a merged PR *(≈1,880 tokens)*
   Tags: dev, github, issues, testing, claude-code
