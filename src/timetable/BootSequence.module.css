@@ -34,8 +34,8 @@
 
 .stage[data-state='active'] .marker {
   background-color: var(--color-blue-scan);
-  /* Pulse — DESIGN.md §10 mechanical easing */
-  animation: scan-pulse 800ms steps(2, end) infinite;
+  /* Pulse — DESIGN.md §10 mechanical easing (defined in motion.css) */
+  animation: scan-pulse var(--duration-scan) var(--easing-mechanical) infinite;
 }
 
 .code {
@@ -69,20 +69,4 @@
 
 .stage[data-state='active'] .state {
   color: var(--color-blue-scan);
-}
-
-@keyframes scan-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .stage[data-state='active'] .marker {
-    animation: none;
-  }
 }
