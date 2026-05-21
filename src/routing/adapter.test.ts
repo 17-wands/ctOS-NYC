@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Router } from 'minotor';
-import { buildQuery, buildRangeQuery, extractItineraries } from './adapter';
+import { buildQuery, buildRangeQuery, extractItineraries, filterItineraries } from './adapter';
 import type { TripQuery } from '../query/types';
+import type { Itinerary, ExclusionState } from './types';
 
 describe('buildQuery', () => {
   it('builds a simple query with origin, destination, and departure time', () => {
@@ -142,5 +143,188 @@ describe('extractItineraries', () => {
     });
     expect(itineraries[0]?.totalDuration).toBe(30);
     expect(itineraries[0]?.transferCount).toBe(0);
+  });
+});
+
+describe('filterItineraries', () => {
+  const mockItinerary: Itinerary = {
+    legs: [
+      {
+        type: 'vehicle',
+        fromStopId: 1,
+        toStopId: 2,
+        fromStopName: '59 St',
+        toStopName: '14 St',
+        departureTime: new Date('2026-05-20T14:30:00Z'),
+        arrivalTime: new Date('2026-05-20T15:00:00Z'),
+        duration: 30,
+        routeName: 'Broadway Express',
+        routeShortName: 'Q',
+      },
+    ],
+    departureTime: new Date('2026-05-20T14:30:00Z'),
+    arrivalTime: new Date('2026-05-20T15:00:00Z'),
+    totalDuration: 30,
+    transferCount: 0,
+  };
+
+  it('returns all itineraries when exclusions are empty', () => {
+    const itineraries = [mockItinerary];
+    const exclusions: ExclusionState = { excludedRoutes: new Set(), excludedStops: new Set() };
+
+    const result = filterItineraries(itineraries, exclusions);
+
+    expect(result).toEqual(itineraries);
+  });
+
+  it('excludes itineraries using excluded route (by routeShortName)', () => {
+    const itineraries = [mockItinerary];
+    const exclusions: ExclusionState = {
+      excludedRoutes: new Set(['Q']),
+      excludedStops: new Set(),
+    };
+
+    const result = filterItineraries(itineraries, exclusions);
+
+    expect(result).toEqual([]);
+  });
+
+  it('excludes itineraries using excluded route (by routeName)', () => {
+    const itineraries = [mockItinerary];
+    const exclusions: ExclusionState = {
+      excludedRoutes: new Set(['Broadway Express']),
+      excludedStops: new Set(),
+    };
+
+    const result = filterItineraries(itineraries, exclusions);
+
+    expect(result).toEqual([]);
+  });
+
+  it('excludes itineraries using excluded stop (fromStopId)', () => {
+    const itineraries = [mockItinerary];
+    const exclusions: ExclusionState = {
+      excludedRoutes: new Set(),
+      excludedStops: new Set([1]),
+    };
+
+    const result = filterItineraries(itineraries, exclusions);
+
+    expect(result).toEqual([]);
+  });
+
+  it('excludes itineraries using excluded stop (toStopId)', () => {
+    const itineraries = [mockItinerary];
+    const exclusions: ExclusionState = {
+      excludedRoutes: new Set(),
+      excludedStops: new Set([2]),
+    };
+
+    const result = filterItineraries(itineraries, exclusions);
+
+    expect(result).toEqual([]);
+  });
+
+  it('does not exclude transfer or access legs', () => {
+    const itineraryWithTransfer: Itinerary = {
+      ...mockItinerary,
+      legs: [
+        {
+          type: 'transfer',
+          fromStopId: 1,
+          toStopId: 2,
+          fromStopName: '59 St',
+          toStopName: '14 St',
+          departureTime: new Date('2026-05-20T14:30:00Z'),
+          arrivalTime: new Date('2026-05-20T14:35:00Z'),
+          duration: 5,
+        },
+      ],
+    };
+
+    const exclusions: ExclusionState = {
+      excludedRoutes: new Set(),
+      excludedStops: new Set([1]),
+    };
+
+    const result = filterItineraries([itineraryWithTransfer], exclusions);
+
+    expect(result).toEqual([itineraryWithTransfer]);
+  });
+
+  it('returns empty array when all itineraries are excluded', () => {
+    const itineraries = [mockItinerary];
+    const exclusions: ExclusionState = {
+      excludedRoutes: new Set(['Q']),
+      excludedStops: new Set(),
+    };
+
+    const result = filterItineraries(itineraries, exclusions);
+
+    expect(result).toEqual([]);
+  });
+
+  it('excludes itinerary if ANY leg uses excluded route', () => {
+    const multiLegItinerary: Itinerary = {
+      legs: [
+        {
+          type: 'vehicle',
+          fromStopId: 1,
+          toStopId: 2,
+          fromStopName: '59 St',
+          toStopName: 'Times Sq',
+          departureTime: new Date('2026-05-20T14:30:00Z'),
+          arrivalTime: new Date('2026-05-20T14:45:00Z'),
+          duration: 15,
+          routeShortName: 'N',
+        },
+        {
+          type: 'transfer',
+          fromStopId: 2,
+          toStopId: 3,
+          fromStopName: 'Times Sq',
+          toStopName: 'Times Sq',
+          departureTime: new Date('2026-05-20T14:45:00Z'),
+          arrivalTime: new Date('2026-05-20T14:50:00Z'),
+          duration: 5,
+        },
+        {
+          type: 'vehicle',
+          fromStopId: 3,
+          toStopId: 4,
+          fromStopName: 'Times Sq',
+          toStopName: '14 St',
+          departureTime: new Date('2026-05-20T14:50:00Z'),
+          arrivalTime: new Date('2026-05-20T15:05:00Z'),
+          duration: 15,
+          routeShortName: 'L',
+        },
+      ],
+      departureTime: new Date('2026-05-20T14:30:00Z'),
+      arrivalTime: new Date('2026-05-20T15:05:00Z'),
+      totalDuration: 35,
+      transferCount: 1,
+    };
+
+    const exclusions: ExclusionState = {
+      excludedRoutes: new Set(['L']),
+      excludedStops: new Set(),
+    };
+
+    const result = filterItineraries([multiLegItinerary], exclusions);
+
+    expect(result).toEqual([]);
+  });
+
+  it('keeps itinerary if no legs match exclusions', () => {
+    const itineraries = [mockItinerary];
+    const exclusions: ExclusionState = {
+      excludedRoutes: new Set(['L']),
+      excludedStops: new Set([999]),
+    };
+
+    const result = filterItineraries(itineraries, exclusions);
+
+    expect(result).toEqual(itineraries);
   });
 });

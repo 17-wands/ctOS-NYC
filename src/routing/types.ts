@@ -22,3 +22,8 @@ export type Itinerary = {
   totalDuration: number;
   transferCount: number;
 };
+
+export type ExclusionState = {
+  excludedRoutes: Set<string>;
+  excludedStops: Set<StopId>;
+};

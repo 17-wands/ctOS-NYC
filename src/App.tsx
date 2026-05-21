@@ -8,13 +8,13 @@ import {
   type TimetableBundle,
 } from './timetable';
 import { QueryPanel, type TripQuery } from './query';
-import { ItineraryList, ItineraryPanel } from './itinerary';
-import { extractItineraries } from './routing';
+import { ItineraryList, ItineraryPanel, DisruptionSummary } from './itinerary';
+import { extractItineraries, filterItineraries } from './routing';
 import { Map } from './map';
 import { fetchRealtimeData } from './realtime/client';
 import { annotateItinerary } from './routing/matcher';
 import type { RealtimeResponse } from './realtime/types';
-import type { Itinerary } from './routing';
+import type { Itinerary, ExclusionState } from './routing';
 import type { AnnotatedItinerary } from './routing/disruptions';
 
 type LoadState =
@@ -38,6 +38,10 @@ export function App() {
   const [state, setState] = useState<LoadState>({ kind: 'loading', stage: 'fetch' });
   const [routingState, setRoutingState] = useState<RoutingState>({ kind: 'idle' });
   const [realtimeState, setRealtimeState] = useState<RealtimeState>({ kind: 'idle' });
+  const [exclusionState, setExclusionState] = useState<ExclusionState>({
+    excludedRoutes: new Set(),
+    excludedStops: new Set(),
+  });
 
   const handleQuerySubmit = (query: TripQuery, bundle: TimetableBundle) => {
     setRoutingState({ kind: 'computing' });
@@ -56,6 +60,20 @@ export function App() {
       const selectedIndex = routingState.itineraries.indexOf(itinerary);
       setRoutingState({ ...routingState, selectedIndex });
     }
+  };
+
+  const handleExcludeRoute = (routeShortName: string) => {
+    setExclusionState((prev) => ({
+      ...prev,
+      excludedRoutes: new Set([...prev.excludedRoutes, routeShortName]),
+    }));
+  };
+
+  const handleClearExclusions = () => {
+    setExclusionState({
+      excludedRoutes: new Set(),
+      excludedStops: new Set(),
+    });
   };
 
   useEffect(() => {
@@ -112,16 +130,17 @@ export function App() {
     };
   }, [state]);
 
-  // Annotate itineraries when realtime data updates
-  const annotatedItineraries = useMemo(() => {
-    if (routingState.kind !== 'results' || realtimeState.kind !== 'loaded') {
-      return routingState.kind === 'results' ? routingState.itineraries : [];
-    }
+  // Filter itineraries based on exclusions
+  const filteredItineraries = useMemo(() => {
+    if (routingState.kind !== 'results') return [];
+    return filterItineraries(routingState.itineraries, exclusionState);
+  }, [routingState, exclusionState]);
 
-    return routingState.itineraries.map((itinerary) =>
-      annotateItinerary(itinerary, realtimeState.data),
-    );
-  }, [routingState, realtimeState]);
+  // Annotate filtered itineraries with realtime data
+  const annotatedItineraries = useMemo(() => {
+    if (realtimeState.kind !== 'loaded') return filteredItineraries;
+    return filteredItineraries.map((itinerary) => annotateItinerary(itinerary, realtimeState.data));
+  }, [filteredItineraries, realtimeState]);
 
   return (
     <div className="app-shell">
@@ -135,8 +154,11 @@ export function App() {
           state,
           routingState,
           annotatedItineraries,
+          exclusionState,
           handleQuerySubmit,
           handleItinerarySelect,
+          handleExcludeRoute,
+          handleClearExclusions,
         )}
       </main>
     </div>
@@ -148,8 +170,11 @@ function renderMain(
   state: LoadState,
   routingState: RoutingState,
   annotatedItineraries: (Itinerary | AnnotatedItinerary)[],
+  exclusionState: ExclusionState,
   onQuerySubmit: (query: TripQuery, bundle: TimetableBundle) => void,
   onItinerarySelect: (itinerary: Itinerary) => void,
+  onExcludeRoute: (routeShortName: string) => void,
+  onClearExclusions: () => void,
 ) {
   if (isSandbox) return <ComponentsSandbox />;
   if (state.kind === 'loading') return <BootSequence stage={state.stage} />;
@@ -160,6 +185,8 @@ function renderMain(
       <QueryPanel
         bundle={state.bundle}
         onQuerySubmit={(query) => onQuerySubmit(query, state.bundle)}
+        exclusionState={exclusionState}
+        onClearExclusions={onClearExclusions}
       />
       {routingState.kind === 'computing' && (
         <div style={{ padding: '1rem', color: 'var(--color-blue-scan)' }}>COMPUTING ROUTES...</div>
@@ -174,11 +201,24 @@ function renderMain(
           {routingState.selectedIndex !== undefined &&
             annotatedItineraries[routingState.selectedIndex] && (
               <>
+                {'worstSeverity' in annotatedItineraries[routingState.selectedIndex]! && (
+                  <DisruptionSummary
+                    itinerary={
+                      annotatedItineraries[routingState.selectedIndex]! as AnnotatedItinerary
+                    }
+                    onExcludeRoute={onExcludeRoute}
+                    excludedRoutes={exclusionState.excludedRoutes}
+                  />
+                )}
                 <Map
                   itinerary={annotatedItineraries[routingState.selectedIndex]!}
                   stopsIndex={state.bundle.stopsIndex}
                 />
-                <ItineraryPanel itinerary={annotatedItineraries[routingState.selectedIndex]!} />
+                <ItineraryPanel
+                  itinerary={annotatedItineraries[routingState.selectedIndex]!}
+                  onExcludeRoute={onExcludeRoute}
+                  excludedRoutes={exclusionState.excludedRoutes}
+                />
               </>
             )}
         </>

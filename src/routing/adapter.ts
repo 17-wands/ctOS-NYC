@@ -1,6 +1,6 @@
 import { Query, RangeQuery, Router, type Leg, type Route } from 'minotor';
 import type { TripQuery } from '../query/types';
-import type { Itinerary, ItineraryLeg, LegType } from './types';
+import type { Itinerary, ItineraryLeg, LegType, ExclusionState } from './types';
 import { dateToMinutesFromMidnight, minutesFromMidnightToDate } from './time';
 
 const RANGE_WINDOW_MINUTES = 120;
@@ -115,5 +115,36 @@ export function extractItineraries(router: Router, tripQuery: TripQuery): Itiner
       totalDuration,
       transferCount,
     };
+  });
+}
+
+export function filterItineraries(
+  itineraries: Itinerary[],
+  exclusions: ExclusionState,
+): Itinerary[] {
+  if (exclusions.excludedRoutes.size === 0 && exclusions.excludedStops.size === 0) {
+    return itineraries;
+  }
+
+  return itineraries.filter((itinerary) => {
+    for (const leg of itinerary.legs) {
+      if (leg.type !== 'vehicle') continue;
+
+      if (leg.routeShortName && exclusions.excludedRoutes.has(leg.routeShortName)) {
+        return false;
+      }
+      if (leg.routeName && exclusions.excludedRoutes.has(leg.routeName)) {
+        return false;
+      }
+
+      if (
+        exclusions.excludedStops.has(leg.fromStopId) ||
+        exclusions.excludedStops.has(leg.toStopId)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
   });
 }

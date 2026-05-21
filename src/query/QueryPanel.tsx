@@ -3,9 +3,11 @@ import type { Stop } from 'minotor';
 import { Panel } from '../components/Panel';
 import { Button } from '../components/Button';
 import type { TimetableBundle } from '../timetable';
+import type { ExclusionState } from '../routing/types';
 import { StationSearch } from './StationSearch';
 import { GeolocationButton } from './GeolocationButton';
 import { TimePicker } from './TimePicker';
+import { ExclusionBanner } from './ExclusionBanner';
 import type { TripQuery, GeolocationError } from './types';
 import { roundToNextFiveMinutes, validateQuery } from './utils';
 import styles from './QueryPanel.module.css';
@@ -13,13 +15,20 @@ import styles from './QueryPanel.module.css';
 type QueryPanelProps = {
   bundle: TimetableBundle;
   onQuerySubmit: (query: TripQuery) => void;
+  exclusionState?: ExclusionState;
+  onClearExclusions?: () => void;
 };
 
 /**
  * Query panel orchestrator that composes station search, geolocation, and time picker
  * into a complete trip query form.
  */
-export function QueryPanel({ bundle, onQuerySubmit }: QueryPanelProps) {
+export function QueryPanel({
+  bundle,
+  onQuerySubmit,
+  exclusionState,
+  onClearExclusions,
+}: QueryPanelProps) {
   const [origin, setOrigin] = useState<Stop | null>(null);
   const [destination, setDestination] = useState<Stop | null>(null);
   const [mode, setMode] = useState<'depart-at' | 'arrive-by'>('depart-at');
@@ -67,6 +76,9 @@ export function QueryPanel({ bundle, onQuerySubmit }: QueryPanelProps) {
         </Button>
       }
     >
+      {exclusionState && onClearExclusions && (
+        <ExclusionBanner exclusionState={exclusionState} onClear={onClearExclusions} />
+      )}
       <div className={styles.form}>
         <StationSearch
           stopsIndex={bundle.stopsIndex}
