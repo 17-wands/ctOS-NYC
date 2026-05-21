@@ -130,7 +130,7 @@ workflow:
           type: cli
           required: true
           alternatives: []
-        - name: pytest
+        - name: Playwright
           type: cli
           required: true
           alternatives: []
@@ -160,7 +160,7 @@ workflow:
 
     - id: run-checks
       name: Run Checks
-      description: Run the checks for the layer touched — npm jobs:validate, test, test:e2e, build for TypeScript
+      description: Run the TypeScript checks — npm run validate, test, test:e2e, build
       inputs:
         - "Code changes"
         - "Updated tests"
