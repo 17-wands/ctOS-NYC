@@ -1,0 +1,66 @@
+/*
+ * ctOS NYC motion system — DESIGN.md section 10
+ * Mechanical, computational motion: scanning, locking, classifying, escalating.
+ */
+
+:root {
+  /* Timing — DESIGN.md §10 */
+  --duration-micro: 80ms;
+  --duration-short: 160ms;
+  --duration-medium: 240ms;
+  --duration-scan: 800ms;
+
+  /* Easing — linear or mechanical, never organic */
+  --easing-linear: linear;
+  --easing-mechanical: steps(2, end);
+}
+
+/* Scan animation for boot/loading states */
+@keyframes scan-pass {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes scan-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Bottom sheet slide animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Panel entrance animation */
+.panel-enter {
+  animation: slide-up var(--duration-medium) var(--easing-linear);
+}
+
+/*
+ * Reduced motion — DESIGN.md §10
+ * "Honor prefers-reduced-motion" is a requirement. The system should be
+ * functional without motion, never decorative.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

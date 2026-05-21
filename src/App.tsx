@@ -11,6 +11,7 @@ import { QueryPanel, type TripQuery } from './query';
 import { ItineraryList, ItineraryPanel, DisruptionSummary } from './itinerary';
 import { extractItineraries, filterItineraries } from './routing';
 import { Map } from './map';
+import { BottomSheet } from './components/BottomSheet';
 import { fetchRealtimeData } from './realtime/client';
 import { annotateItinerary } from './routing/matcher';
 import type { RealtimeResponse } from './realtime/types';
@@ -42,6 +43,7 @@ export function App() {
     excludedRoutes: new Set(),
     excludedStops: new Set(),
   });
+  const [bottomSheetExpanded, setBottomSheetExpanded] = useState(false);
 
   const handleQuerySubmit = (query: TripQuery, bundle: TimetableBundle) => {
     setRoutingState({ kind: 'computing' });
@@ -49,6 +51,7 @@ export function App() {
     try {
       const itineraries = extractItineraries(bundle.router, query);
       setRoutingState({ kind: 'results', itineraries, selectedIndex: undefined });
+      setBottomSheetExpanded(true); // Auto-expand bottom sheet when results appear
     } catch (error) {
       console.error('Routing failed:', error);
       setRoutingState({ kind: 'idle' });
@@ -155,10 +158,12 @@ export function App() {
           routingState,
           annotatedItineraries,
           exclusionState,
+          bottomSheetExpanded,
           handleQuerySubmit,
           handleItinerarySelect,
           handleExcludeRoute,
           handleClearExclusions,
+          () => setBottomSheetExpanded(!bottomSheetExpanded),
         )}
       </main>
     </div>
@@ -171,58 +176,98 @@ function renderMain(
   routingState: RoutingState,
   annotatedItineraries: (Itinerary | AnnotatedItinerary)[],
   exclusionState: ExclusionState,
+  bottomSheetExpanded: boolean,
   onQuerySubmit: (query: TripQuery, bundle: TimetableBundle) => void,
   onItinerarySelect: (itinerary: Itinerary) => void,
   onExcludeRoute: (routeShortName: string) => void,
   onClearExclusions: () => void,
+  onToggleBottomSheet: () => void,
 ) {
   if (isSandbox) return <ComponentsSandbox />;
   if (state.kind === 'loading') return <BootSequence stage={state.stage} />;
   if (state.kind === 'error') return <ErrorState error={state.error} />;
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <QueryPanel
-        bundle={state.bundle}
-        onQuerySubmit={(query) => onQuerySubmit(query, state.bundle)}
-        exclusionState={exclusionState}
-        onClearExclusions={onClearExclusions}
-      />
-      {routingState.kind === 'computing' && (
-        <div style={{ padding: '1rem', color: 'var(--color-blue-scan)' }}>COMPUTING ROUTES...</div>
-      )}
-      {routingState.kind === 'results' && (
-        <>
-          <ItineraryList
-            itineraries={annotatedItineraries}
-            onSelect={onItinerarySelect}
-            selectedIndex={routingState.selectedIndex}
-          />
-          {routingState.selectedIndex !== undefined &&
-            annotatedItineraries[routingState.selectedIndex] && (
-              <>
-                {'worstSeverity' in annotatedItineraries[routingState.selectedIndex]! && (
-                  <DisruptionSummary
-                    itinerary={
-                      annotatedItineraries[routingState.selectedIndex]! as AnnotatedItinerary
-                    }
-                    onExcludeRoute={onExcludeRoute}
-                    excludedRoutes={exclusionState.excludedRoutes}
-                  />
-                )}
-                <Map
-                  itinerary={annotatedItineraries[routingState.selectedIndex]!}
-                  stopsIndex={state.bundle.stopsIndex}
-                />
-                <ItineraryPanel
-                  itinerary={annotatedItineraries[routingState.selectedIndex]!}
+  const resultsContent =
+    routingState.kind === 'results' ? (
+      <>
+        <ItineraryList
+          itineraries={annotatedItineraries}
+          onSelect={onItinerarySelect}
+          selectedIndex={routingState.selectedIndex}
+        />
+        {routingState.selectedIndex !== undefined &&
+          annotatedItineraries[routingState.selectedIndex] && (
+            <>
+              {'worstSeverity' in annotatedItineraries[routingState.selectedIndex]! && (
+                <DisruptionSummary
+                  itinerary={
+                    annotatedItineraries[routingState.selectedIndex]! as AnnotatedItinerary
+                  }
                   onExcludeRoute={onExcludeRoute}
                   excludedRoutes={exclusionState.excludedRoutes}
                 />
-              </>
-            )}
-        </>
+              )}
+              <ItineraryPanel
+                itinerary={annotatedItineraries[routingState.selectedIndex]!}
+                onExcludeRoute={onExcludeRoute}
+                excludedRoutes={exclusionState.excludedRoutes}
+              />
+            </>
+          )}
+      </>
+    ) : null;
+
+  return (
+    <>
+      {/* Mobile: QueryPanel in its own grid area */}
+      <div className="query-region">
+        <QueryPanel
+          bundle={state.bundle}
+          onQuerySubmit={(query) => onQuerySubmit(query, state.bundle)}
+          exclusionState={exclusionState}
+          onClearExclusions={onClearExclusions}
+        />
+        {routingState.kind === 'computing' && (
+          <div style={{ padding: '1rem', color: 'var(--color-blue-scan)' }}>
+            COMPUTING ROUTES...
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: Sidebar with query and results */}
+      <div className="sidebar-region">
+        <QueryPanel
+          bundle={state.bundle}
+          onQuerySubmit={(query) => onQuerySubmit(query, state.bundle)}
+          exclusionState={exclusionState}
+          onClearExclusions={onClearExclusions}
+        />
+        {routingState.kind === 'computing' && (
+          <div style={{ padding: '1rem', color: 'var(--color-blue-scan)' }}>
+            COMPUTING ROUTES...
+          </div>
+        )}
+        {resultsContent}
+      </div>
+
+      {/* Map fills remaining space on both layouts */}
+      <div className="map-region">
+        {routingState.kind === 'results' &&
+          routingState.selectedIndex !== undefined &&
+          annotatedItineraries[routingState.selectedIndex] && (
+            <Map
+              itinerary={annotatedItineraries[routingState.selectedIndex]!}
+              stopsIndex={state.bundle.stopsIndex}
+            />
+          )}
+      </div>
+
+      {/* Mobile: Bottom sheet with results */}
+      {routingState.kind === 'results' && (
+        <BottomSheet isExpanded={bottomSheetExpanded} onToggle={onToggleBottomSheet}>
+          {resultsContent}
+        </BottomSheet>
       )}
-    </div>
+    </>
   );
 }

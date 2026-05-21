@@ -1,0 +1,73 @@
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-carbon);
+  border-top: var(--border-thin) solid var(--color-slate);
+  max-height: 85vh;
+  transition: transform var(--duration-medium) var(--easing-linear);
+}
+
+/* Collapsed: show only handle */
+.sheet[data-expanded='false'] {
+  transform: translateY(calc(100% - 4rem));
+}
+
+/* Expanded: full height */
+.sheet[data-expanded='true'] {
+  transform: translateY(0);
+}
+
+.handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 3rem;
+  padding: var(--space-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.handle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.handle:focus-visible {
+  outline: var(--border-strong) solid var(--color-blue-scan);
+  outline-offset: -2px;
+}
+
+.handleBar {
+  display: block;
+  width: 3rem;
+  height: 4px;
+  background-color: var(--color-slate);
+  border-radius: var(--radius-sm);
+}
+
+.handle:hover .handleBar {
+  background-color: var(--color-ash);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Hide on desktop */
+@media (min-width: 768px) {
+  .sheet {
+    display: none;
+  }
+}
