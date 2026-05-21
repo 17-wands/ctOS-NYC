@@ -17,11 +17,14 @@
     "validate": "npm run lint && npm run typecheck && npm run format",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:timetable": "tsx scripts/build-timetable.ts",
+    "fixtures:rebuild": "cd tests/fixtures/gtfs-mini && rm -f ../gtfs-mini.zip && zip -j ../gtfs-mini.zip ./*.txt"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@fontsource/inter-tight": "^5.2.7",
+    "minotor": "^11.2.3",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
@@ -40,6 +43,7 @@
     "globals": "^15.0.0",
     "jsdom": "^25.0.0",
     "prettier": "^3.0.0",
+    "tsx": "^4.22.3",
     "typescript": "^5.4.0",
     "typescript-eslint": "^8.0.0",
     "vite": "^5.0.0",

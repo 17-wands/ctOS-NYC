@@ -67,7 +67,7 @@ Principles:
 | Component | Responsibility |
 |---|---|
 | App shell | React + Vite SPA: layout, routing between views, query/result state. |
-| Timetable loader | Fetches `timetable.pb`, hydrates the in-memory minotor structures, drives the boot sequence. |
+| Timetable loader | Fetches `timetable.pb` and `stops.pb`, hydrates the in-memory minotor structures, drives the boot sequence. |
 | minotor wrapper | Thin adapter over the `minotor` package: stop lookup, point/range queries, exclusion filters. |
 | Realtime client | Calls `/api/realtime`, polls on an interval, exposes normalized disruptions. |
 | Disruption matcher | Maps each disruption to the routes and stops it affects; annotates itineraries. |
@@ -78,12 +78,13 @@ Principles:
 
 **Static schedule.** The MTA GTFS static zip (stops, routes, trips, stop_times,
 calendar) is the source. minotor's `GtfsParser` converts it into a `Timetable`
-plus a stops index, serialized to a protobuf binary, `timetable.pb`. This is built
-ahead of time (see §6), never in the browser.
+plus a `StopsIndex`, serialized to two protobuf binaries — `timetable.pb` and
+`stops.pb` — matching minotor's native `serialize()` API. Both are built ahead
+of time (see §6), never in the browser.
 
-**In-memory structures.** At startup the browser deserializes `timetable.pb` into
-minotor's `Timetable` and `StopsIndex`, then constructs the `Router`. These live
-for the session.
+**In-memory structures.** At startup the browser fetches both assets in
+parallel, deserializes them via `Timetable.fromData` and `StopsIndex.fromData`,
+then constructs the `Router`. These live for the session.
 
 **Itinerary model.** A query returns Pareto-ranked itineraries. Each itinerary is
 an ordered list of legs; a leg is either a transit leg (route, board stop, alight
@@ -134,8 +135,8 @@ warning, `BREACH` → critical.
    │
    ├─▶ download MTA GTFS static zip
    ├─▶ minotor GtfsParser ──▶ Timetable + StopsIndex
-   ├─▶ serialize ──▶ timetable.pb
-   └─▶ publish asset ──▶ Vercel deploy
+   ├─▶ serialize ──▶ timetable.pb + stops.pb
+   └─▶ publish assets ──▶ Vercel deploy
 ```
 
 **Route planning query**
@@ -166,12 +167,17 @@ realtime client
 Parsing the full GTFS feed is slow (on the order of minutes) and must not happen
 in the browser. A GitHub Action, scheduled weekly and runnable on demand,
 downloads the MTA subway GTFS static zip, runs minotor's `GtfsParser` in Node,
-serializes the result to `timetable.pb`, and triggers a Vercel deploy so the new
-asset ships on the CDN.
+serializes the result to `timetable.pb` and `stops.pb`, and triggers a Vercel
+deploy so the new assets ship on the CDN.
 
-The browser fetches `timetable.pb` once at startup and deserializes it behind the
-`DESIGN.md` boot sequence. We consume the published `minotor` npm package, so the
-app build needs no `protoc` toolchain.
+The pipeline lives in `scripts/build-timetable.ts` and is invokable locally as
+`npm run build:timetable`. It accepts a URL or local zip path, defaults to the
+canonical MTA subway GTFS feed, and writes both protobufs into `public/`. The
+GitHub Action runs the same script with the same defaults.
+
+The browser fetches both assets in parallel at startup and deserializes them
+behind the `DESIGN.md` boot sequence (`src/timetable/loader.ts`). We consume the
+published `minotor` npm package, so the app build needs no `protoc` toolchain.
 
 ## 7. Realtime proxy
 
@@ -244,8 +250,9 @@ GitHub Actions runs on every push and pull request:
 - `npm run build` — production build
 
 Vercel deploys the production site on merge to `main` and a preview deployment
-for every pull request. A separate scheduled Action rebuilds `timetable.pb` (see
-§6). No deploy secrets are committed; the MTA feeds need no API key.
+for every pull request. A separate scheduled Action runs `npm run build:timetable`
+to rebuild `timetable.pb` and `stops.pb` (see §6). No deploy secrets are
+committed; the MTA feeds need no API key.
 
 ## 12. Security and privacy
 
@@ -266,7 +273,7 @@ for every pull request. A separate scheduled Action rebuilds `timetable.pb` (see
 | Budget | Target |
 |---|---|
 | Initial JS (gzipped, excludes map and timetable) | under ~250 KB |
-| `timetable.pb` (compressed, lazy-loaded after first paint) | under ~8 MB |
+| `timetable.pb` + `stops.pb` (compressed, lazy-loaded after first paint, combined) | under ~8 MB |
 | Query to itinerary, after the timetable has loaded | under ~1 s on a mid-range phone |
 | Lighthouse mobile — performance and accessibility | tracked per release |
 

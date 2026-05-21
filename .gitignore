@@ -6,6 +6,11 @@ dist/
 build/
 .vite/
 
+# Generated timetable assets (rebuilt by scripts/build-timetable.ts in CI;
+# not source).
+public/timetable.pb
+public/stops.pb
+
 # Test output
 coverage/
 playwright-report/

@@ -1,0 +1,3 @@
+route_id,service_id,trip_id,trip_headsign,direction_id
+1,WKD,1_S_001,South Ferry,1
+1,WKD,1_S_002,South Ferry,1
