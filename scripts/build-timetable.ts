@@ -15,7 +15,7 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import {
@@ -58,8 +58,68 @@ export type BuildResult = {
   stopsBytes: number;
 };
 
+/** A service date to parse: a YYYY-MM-DD label plus the JS `Date` minotor parses. */
+export type DateSpec = {
+  /** Calendar label used for file naming and the manifest (YYYY-MM-DD). */
+  serviceDate: string;
+  /** The instant handed to `parseTimetable`; minotor resolves its calendar day. */
+  date: Date;
+};
+
+/** Serialized assets for one GTFS feed: a shared stops index + per-day timetables. */
+export type ScheduleAssets = {
+  /** Shared, date-independent stops index (minotor StopId is row-order of stops.txt). */
+  stops: Uint8Array;
+  /** Stable content hash of the stops buffer; ties day-files to their stops version. */
+  feedVersion: string;
+  /** One serialized timetable per requested service date. */
+  days: Array<{ serviceDate: string; bytes: Uint8Array }>;
+};
+
 /**
- * Build serialized timetable + stops protobufs from a GTFS source.
+ * Parse a GTFS source once and serialize a shared stops index plus one timetable
+ * per requested service date. The zip is downloaded/resolved a single time and the
+ * same `GtfsParser` is reused, so only the per-day `parseTimetable` cost repeats.
+ *
+ * @throws If the source cannot be fetched or read, or if the parsed feed contains
+ *   zero stops (a signal the input is malformed or the wrong route-type profile
+ *   was used).
+ */
+export async function buildScheduleAssets(opts: {
+  source: string;
+  dates: DateSpec[];
+  profile?: GtfsProfile;
+}): Promise<ScheduleAssets> {
+  const profile = opts.profile ?? standardGtfsProfile;
+  const { path: zipPath, cleanup } = await resolveZipPath(opts.source);
+  try {
+    const parser = new GtfsParser(zipPath, profile);
+
+    const stopsIndex = await parser.parseStops();
+    if (stopsIndex.size() === 0) {
+      throw new Error(
+        `Parsed feed contains zero stops. Source=${opts.source}. ` +
+          `If this is a feed that uses extended GTFS route types, pass profile=extended.`,
+      );
+    }
+    const stops = stopsIndex.serialize();
+    const feedVersion = createHash('sha256').update(stops).digest('hex').slice(0, 12);
+
+    const days: ScheduleAssets['days'] = [];
+    for (const spec of opts.dates) {
+      const timetable = await parser.parseTimetable(spec.date);
+      days.push({ serviceDate: spec.serviceDate, bytes: timetable.serialize() });
+    }
+
+    return { stops, feedVersion, days };
+  } finally {
+    await cleanup();
+  }
+}
+
+/**
+ * Build serialized timetable + stops protobufs from a GTFS source for a single
+ * service day, writing the legacy `timetable.pb` / `stops.pb` filenames.
  *
  * @throws If the source cannot be fetched or read, or if the parsed feed
  *   contains zero stops (a signal the input is malformed or the wrong
@@ -67,42 +127,31 @@ export type BuildResult = {
  */
 export async function buildTimetable(opts: BuildOptions): Promise<BuildResult> {
   const date = opts.date ?? new Date();
-  const profile = opts.profile ?? standardGtfsProfile;
   const outDir = resolve(opts.outDir);
 
-  await mkdir(outDir, { recursive: true });
+  const assets = await buildScheduleAssets({
+    source: opts.source,
+    dates: [{ serviceDate: 'single', date }],
+    profile: opts.profile,
+  });
 
-  const { path: zipPath, cleanup } = await resolveZipPath(opts.source);
-  try {
-    const parser = new GtfsParser(zipPath, profile);
-    const timetable = await parser.parseTimetable(date);
-    const stopsIndex = await parser.parseStops();
-
-    if (stopsIndex.size() === 0) {
-      throw new Error(
-        `Parsed feed contains zero stops. Source=${opts.source}. ` +
-          `If this is a feed that uses extended GTFS route types, pass profile=extended.`,
-      );
-    }
-
-    const timetableBuf = timetable.serialize();
-    const stopsBuf = stopsIndex.serialize();
-
-    const timetablePath = join(outDir, 'timetable.pb');
-    const stopsPath = join(outDir, 'stops.pb');
-
-    await writeFile(timetablePath, timetableBuf);
-    await writeFile(stopsPath, stopsBuf);
-
-    return {
-      timetablePath,
-      stopsPath,
-      timetableBytes: timetableBuf.byteLength,
-      stopsBytes: stopsBuf.byteLength,
-    };
-  } finally {
-    await cleanup();
+  const day = assets.days[0];
+  if (!day) {
+    throw new Error('buildScheduleAssets returned no timetable for the requested date.');
   }
+
+  await mkdir(outDir, { recursive: true });
+  const timetablePath = join(outDir, 'timetable.pb');
+  const stopsPath = join(outDir, 'stops.pb');
+  await writeFile(timetablePath, day.bytes);
+  await writeFile(stopsPath, assets.stops);
+
+  return {
+    timetablePath,
+    stopsPath,
+    timetableBytes: day.bytes.byteLength,
+    stopsBytes: assets.stops.byteLength,
+  };
 }
 
 /**

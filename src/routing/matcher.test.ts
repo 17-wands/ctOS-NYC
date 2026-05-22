@@ -7,8 +7,8 @@ describe('annotateItinerary', () => {
   const mockItinerary: Itinerary = {
     departureTime: new Date('2026-05-21T09:00:00Z'),
     arrivalTime: new Date('2026-05-21T09:30:00Z'),
-    duration: 30,
-    transfers: 1,
+    totalDuration: 30,
+    transferCount: 1,
     legs: [
       {
         type: 'vehicle',
