@@ -19,6 +19,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "build:timetable": "tsx scripts/build-timetable.ts",
+    "build:schedule-window": "tsx scripts/build-schedule-window.ts",
     "fixtures:rebuild": "cd tests/fixtures/gtfs-mini && rm -f ../gtfs-mini.zip && zip -j ../gtfs-mini.zip ./*.txt"
   },
   "dependencies": {

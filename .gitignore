@@ -10,6 +10,7 @@ build/
 # not source).
 public/timetable.pb
 public/stops.pb
+public/schedule/
 
 # Test output
 coverage/
