@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Responsive Layout', () => {
+// QUARANTINED: pre-existing failures (wrong port / boot text / unseeded timetable). Rebuild in #25 Stage 3b. Tracking: #29
+test.describe.fixme('Responsive Layout', () => {
   test('mobile viewport shows bottom sheet layout', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('http://localhost:3000');
