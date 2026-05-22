@@ -9,7 +9,7 @@ import {
 } from './timetable';
 import { QueryPanel, type TripQuery } from './query';
 import { ItineraryList, ItineraryPanel, DisruptionSummary } from './itinerary';
-import { extractItineraries, filterItineraries } from './routing';
+import { extractWindowedItineraries, filterItineraries } from './routing';
 import { Map } from './map';
 import { BottomSheet } from './components/BottomSheet';
 import { fetchRealtimeData } from './realtime/client';
@@ -49,7 +49,7 @@ export function App() {
     setRoutingState({ kind: 'computing' });
 
     try {
-      const itineraries = extractItineraries(bundle.router, query);
+      const itineraries = extractWindowedItineraries(bundle.days, query);
       setRoutingState({ kind: 'results', itineraries, selectedIndex: undefined });
       setBottomSheetExpanded(true); // Auto-expand bottom sheet when results appear
     } catch (error) {

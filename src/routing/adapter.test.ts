@@ -1,7 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Router } from 'minotor';
-import { buildQuery, buildRangeQuery, extractItineraries, filterItineraries } from './adapter';
+import {
+  buildQuery,
+  buildRangeQuery,
+  extractItineraries,
+  extractWindowedItineraries,
+  filterItineraries,
+} from './adapter';
 import type { TripQuery } from '../query/types';
+import type { ScheduleDay } from '../timetable';
 import type { Itinerary, ExclusionState } from './types';
 
 describe('buildQuery', () => {
@@ -326,5 +333,107 @@ describe('filterItineraries', () => {
     const result = filterItineraries(itineraries, exclusions);
 
     expect(result).toEqual(itineraries);
+  });
+});
+
+describe('extractWindowedItineraries', () => {
+  type MockRangeRoute = ReturnType<typeof vi.fn>;
+
+  function makeRoute(depMin: number, arrMin: number, shortName: string) {
+    return {
+      legs: [
+        {
+          from: { id: 1, name: 'A' },
+          to: { id: 2, name: 'B' },
+          route: { longName: shortName, shortName },
+          departureTime: depMin,
+          arrivalTime: arrMin,
+        },
+      ],
+      departureTime: () => depMin,
+      arrivalTime: () => arrMin,
+      totalDuration: () => arrMin - depMin,
+    };
+  }
+
+  function makeDay(serviceDate: string, routes: ReturnType<typeof makeRoute>[]) {
+    const rangeRoute: MockRangeRoute = vi.fn(() =>
+      routes.length > 0 ? { getRoutes: () => routes } : null,
+    );
+    const day: ScheduleDay = {
+      serviceDate,
+      router: { rangeRoute } as unknown as ScheduleDay['router'],
+    };
+    return { day, rangeRoute };
+  }
+
+  const query = (dateTime: string): TripQuery => ({
+    origin: 1,
+    destination: 2,
+    mode: 'depart-at',
+    dateTime: new Date(dateTime),
+  });
+
+  it('queries only the day whose service covers a future-dated departure', () => {
+    const yesterday = makeDay('2026-05-20', [makeRoute(540, 570, 'Q')]);
+    const target = makeDay('2026-05-21', [makeRoute(540, 570, 'Q')]);
+
+    const result = extractWindowedItineraries(
+      [yesterday.day, target.day],
+      query('2026-05-21T09:00:00-04:00'),
+    );
+
+    expect(yesterday.rangeRoute).not.toHaveBeenCalled();
+    expect(target.rangeRoute).toHaveBeenCalled();
+    expect(target.rangeRoute.mock.calls[0]?.[0].departureTime).toBe(540);
+    expect(result).toHaveLength(1);
+  });
+
+  it('queries both the late-night day and the next day for an after-midnight departure', () => {
+    const late = makeDay('2026-05-20', [makeRoute(1430, 1460, 'Q')]);
+    const next = makeDay('2026-05-21', [makeRoute(0, 20, 'R')]);
+
+    extractWindowedItineraries([late.day, next.day], query('2026-05-20T23:50:00-04:00'));
+
+    expect(late.rangeRoute).toHaveBeenCalled();
+    expect(late.rangeRoute.mock.calls[0]?.[0].departureTime).toBe(1430);
+    expect(next.rangeRoute).toHaveBeenCalled();
+    expect(next.rangeRoute.mock.calls[0]?.[0].departureTime).toBe(0);
+  });
+
+  it('merges results across in-window days, sorted by absolute departure', () => {
+    const late = makeDay('2026-05-20', [makeRoute(1430, 1460, 'Q')]); // 05-21T03:50Z
+    const next = makeDay('2026-05-21', [makeRoute(0, 20, 'R')]); // 05-21T04:00Z
+
+    const result = extractWindowedItineraries(
+      [late.day, next.day],
+      query('2026-05-20T23:50:00-04:00'),
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result[0]?.legs[0]?.routeShortName).toBe('Q'); // earlier absolute departure
+    expect(result[1]?.legs[0]?.routeShortName).toBe('R');
+    expect(result[0]!.departureTime.getTime()).toBeLessThan(result[1]!.departureTime.getTime());
+  });
+
+  it('de-duplicates identical itineraries', () => {
+    const day = makeDay('2026-05-20', [makeRoute(720, 750, 'Q'), makeRoute(720, 750, 'Q')]);
+
+    const result = extractWindowedItineraries([day.day], query('2026-05-20T12:00:00-04:00'));
+
+    expect(result).toHaveLength(1);
+  });
+
+  it('throws when origin or destination is missing', () => {
+    const day = makeDay('2026-05-20', []);
+    const bad: TripQuery = {
+      origin: null,
+      destination: 2,
+      mode: 'depart-at',
+      dateTime: new Date('2026-05-20T12:00:00-04:00'),
+    };
+    expect(() => extractWindowedItineraries([day.day], bad)).toThrow(
+      'Origin and destination are required',
+    );
   });
 });

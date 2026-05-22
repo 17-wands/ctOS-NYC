@@ -77,14 +77,20 @@ Principles:
 ## 4. Data model
 
 **Static schedule.** The MTA GTFS static zip (stops, routes, trips, stop_times,
-calendar) is the source. minotor's `GtfsParser` converts it into a `Timetable`
-plus a `StopsIndex`, serialized to two protobuf binaries — `timetable.pb` and
-`stops.pb` — matching minotor's native `serialize()` API. Both are built ahead
-of time (see §6), never in the browser.
+calendar) is the source. minotor's `GtfsParser` converts it into one `Timetable`
+per service day plus a single shared `StopsIndex` (the `StopId` is the row order
+of `stops.txt`, so it is date-independent). These serialize to per-day
+`timetable-YYYY-MM-DD.pb` files and one `stops-<feedVersion>.pb`, described by a
+`manifest.json`. All are built ahead of time (see §6), never in the browser.
 
-**In-memory structures.** At startup the browser fetches both assets in
-parallel, deserializes them via `Timetable.fromData` and `StopsIndex.fromData`,
-then constructs the `Router`. These live for the session.
+**In-memory structures.** At startup the browser fetches the manifest, then the
+day-files covering the now→+48h window and the shared stops index, in parallel.
+It deserializes them via `Timetable.fromData` / `StopsIndex.fromData` and builds
+one `Router` per day, all sharing the single `StopsIndex` (`src/timetable/loader.ts`).
+A query runs against each day-router at that day's NYC-local midnight reference;
+results are merged, de-duplicated, and sorted (`src/routing/adapter.ts`), so a
+late-night or future-dated trip is answered by the day whose service covers it.
+These live for the session.
 
 **Itinerary model.** A query returns Pareto-ranked itineraries. Each itinerary is
 an ordered list of legs; a leg is either a transit leg (route, board stop, alight
