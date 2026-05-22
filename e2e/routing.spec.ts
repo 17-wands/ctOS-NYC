@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('Trip planning', () => {
+// QUARANTINED: pre-existing failures (wrong port / boot text / unseeded timetable). Rebuild in #25 Stage 3b. Tracking: #29
+test.describe.fixme('Trip planning', () => {
   test('completes a full trip planning flow', async ({ page }) => {
     await page.goto('/');
 
