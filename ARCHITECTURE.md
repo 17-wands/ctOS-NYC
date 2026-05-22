@@ -131,12 +131,12 @@ warning, `BREACH` → critical.
 **Build-time GTFS pipeline**
 
 ```
-[GitHub Action: weekly cron + manual dispatch]
+[GitHub Action: daily cron + manual dispatch]
    │
    ├─▶ download MTA GTFS static zip
-   ├─▶ minotor GtfsParser ──▶ Timetable + StopsIndex
-   ├─▶ serialize ──▶ timetable.pb + stops.pb
-   └─▶ publish assets ──▶ Vercel deploy
+   ├─▶ minotor GtfsParser ──▶ Timetable (per day) + StopsIndex
+   ├─▶ serialize ──▶ timetable-YYYY-MM-DD.pb (×N) + stops-<feedVersion>.pb + manifest.json
+   └─▶ upload ──▶ Vercel Blob (immutable days; manifest overwritten)
 ```
 
 **Route planning query**
@@ -165,19 +165,29 @@ realtime client
 ## 6. GTFS static pipeline
 
 Parsing the full GTFS feed is slow (on the order of minutes) and must not happen
-in the browser. A GitHub Action, scheduled weekly and runnable on demand,
-downloads the MTA subway GTFS static zip, runs minotor's `GtfsParser` in Node,
-serializes the result to `timetable.pb` and `stops.pb`, and triggers a Vercel
-deploy so the new assets ship on the CDN.
+in the browser. A scheduled GitHub Action downloads the MTA subway GTFS static
+zip and runs minotor's `GtfsParser` in Node.
 
-The pipeline lives in `scripts/build-timetable.ts` and is invokable locally as
-`npm run build:timetable`. It accepts a URL or local zip path, defaults to the
-canonical MTA subway GTFS feed, and writes both protobufs into `public/`. The
-GitHub Action runs the same script with the same defaults.
+The schedule is published as a **rolling now→+48h window** of immutable per-day
+files rather than one snapshot. `scripts/build-schedule-window.ts` mints one
+`timetable-YYYY-MM-DD.pb` per service day, a single shared `stops-<feedVersion>.pb`
+(minotor's `StopId` is the row order of `stops.txt`, so one stops index serves
+every day), and a `manifest.json` listing the available days and the stops file.
+Because the day-files are immutable, a daily run only needs to add the next day;
+freshness comes from the **client selecting the days covering its current 48h**
+(`src/timetable/loader.ts`), not from rebuild frequency.
 
-The browser fetches both assets in parallel at startup and deserializes them
-behind the `DESIGN.md` boot sequence (`src/timetable/loader.ts`). We consume the
-published `minotor` npm package, so the app build needs no `protoc` toolchain.
+`scripts/publish-schedule.ts` uploads these assets to **Vercel Blob** under a
+`schedule/` prefix: immutable files are written once (skipped if already present)
+and the `manifest.json` pointer is overwritten with a short cache TTL. This
+**decouples the schedule from the app deploy** — refreshing data never triggers a
+Vercel build. The publisher verifies each run end to end by re-fetching the
+manifest and deserializing the newest day-file and the stops index.
+
+The single-day `scripts/build-timetable.ts` (`npm run build:timetable`) and the
+window builder (`npm run build:schedule-window`) remain runnable locally against a
+URL or local zip. We consume the published `minotor` npm package, so the app build
+needs no `protoc` toolchain.
 
 ## 7. Realtime proxy
 
@@ -250,9 +260,11 @@ GitHub Actions runs on every push and pull request:
 - `npm run build` — production build
 
 Vercel deploys the production site on merge to `main` and a preview deployment
-for every pull request. A separate scheduled Action runs `npm run build:timetable`
-to rebuild `timetable.pb` and `stops.pb` (see §6). No deploy secrets are
-committed; the MTA feeds need no API key.
+for every pull request. A separate scheduled Action (`schedule-refresh.yml`,
+daily cron + manual dispatch) runs `npm run publish:schedule` to rebuild the
+schedule window and upload it to Vercel Blob (see §6); it carries no app code, so
+it never triggers a site deploy. Its only secret is `BLOB_READ_WRITE_TOKEN`, used
+to write to the Blob store. The MTA feeds need no API key.
 
 ## 12. Security and privacy
 

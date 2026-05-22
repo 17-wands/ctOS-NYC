@@ -1,0 +1,48 @@
+name: Schedule Refresh
+
+# Rebuilds the rolling now->+48h schedule window and publishes it to Vercel Blob.
+# Per-day files are immutable, so a daily run only mints the next day's file;
+# freshness comes from the client selecting the right days at runtime (#25).
+on:
+  schedule:
+    # 08:00 UTC daily (~03:00-04:00 America/New_York). Mints the upcoming day
+    # before late-night riders need it for cross-midnight planning.
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'GTFS source URL or local path (defaults to the MTA subway feed)'
+        required: false
+      days:
+        description: 'Number of consecutive service days to publish'
+        required: false
+
+concurrency:
+  group: schedule-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish schedule to Vercel Blob
+        # The publish script verifies the upload end-to-end (fetches the manifest,
+        # then deserializes the newest day-file and the stops index) before exiting.
+        run: >-
+          npm run publish:schedule --
+          ${{ inputs.source && format('--source {0}', inputs.source) || '' }}
+          ${{ inputs.days && format('--days {0}', inputs.days) || '' }}
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
