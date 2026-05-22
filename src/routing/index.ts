@@ -1,4 +1,10 @@
-export { buildQuery, buildRangeQuery, extractItineraries, filterItineraries } from './adapter';
+export {
+  buildQuery,
+  buildRangeQuery,
+  extractItineraries,
+  extractWindowedItineraries,
+  filterItineraries,
+} from './adapter';
 export {
   dateToMinutesFromMidnight,
   minutesFromMidnightToDate,

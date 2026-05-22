@@ -1,63 +1,52 @@
 /**
  * Integration test for the GTFS static pipeline.
  *
- * Issue #3 acceptance criterion: "An integration test confirms a known station
- * resolves through the in-memory StopsIndex after load."
+ * Exercises the real production path end-to-end, now manifest-driven:
+ *   trimmed GTFS zip -> buildScheduleAssets -> manifest + per-day .pb buffers
+ *   -> loadTimetable -> StopsIndex + per-day Routers.
  *
- * Exercises the real production code path end-to-end:
- *   trimmed GTFS zip → buildTimetable → .pb buffers → loadTimetable → StopsIndex.
- *
- * No network. No mocks of the parser or serializer. The only stub is `fetch`,
- * which serves the buffers the build step just produced.
+ * No network and no mocks of the parser/serializer/loader; the only stub is
+ * `fetch`, which serves the buffers the build step produced.
  */
 
 import {
   FIXTURE_KNOWN_STOP_NAME,
   FIXTURE_KNOWN_STOP_SOURCE_ID,
-  buildFixtureBuffers,
-  makeBufferFetch,
-  type FixtureBuffers,
+  buildFixtureWindow,
+  type FixtureWindow,
 } from '../../tests/helpers/fixtures';
-import { DEFAULT_STOPS_URL, DEFAULT_TIMETABLE_URL, loadTimetable } from './loader';
+import { loadTimetable } from './loader';
 
 describe('GTFS static pipeline integration', () => {
-  let buffers: FixtureBuffers;
+  let window: FixtureWindow;
 
   beforeAll(async () => {
-    buffers = await buildFixtureBuffers();
+    window = await buildFixtureWindow();
   });
 
-  afterAll(async () => {
-    await buffers.cleanup();
-  });
-
-  it('produces non-empty timetable and stops protobufs from the trimmed fixture', () => {
-    expect(buffers.timetableBytes).toBeGreaterThan(0);
-    expect(buffers.stopsBytes).toBeGreaterThan(0);
+  it('loads a router for every published service day', async () => {
+    const bundle = await loadTimetable({ manifestUrl: window.manifestUrl, fetch: window.fetch });
+    expect(bundle.days.map((d) => d.serviceDate)).toEqual(window.serviceDates);
+    expect(bundle.days).toHaveLength(3);
   });
 
   it('resolves a known station through the in-memory StopsIndex after load', async () => {
-    const fetchStub = makeBufferFetch({
-      [DEFAULT_TIMETABLE_URL]: buffers.timetable,
-      [DEFAULT_STOPS_URL]: buffers.stops,
+    const { stopsIndex } = await loadTimetable({
+      manifestUrl: window.manifestUrl,
+      fetch: window.fetch,
     });
-
-    const { stopsIndex } = await loadTimetable({ fetch: fetchStub });
     const stop = stopsIndex.findStopBySourceStopId(FIXTURE_KNOWN_STOP_SOURCE_ID);
-
     expect(stop).toBeDefined();
     expect(stop?.name).toBe(FIXTURE_KNOWN_STOP_NAME);
   });
 
   it('also resolves the station by partial name search', async () => {
-    const fetchStub = makeBufferFetch({
-      [DEFAULT_TIMETABLE_URL]: buffers.timetable,
-      [DEFAULT_STOPS_URL]: buffers.stops,
+    const { stopsIndex } = await loadTimetable({
+      manifestUrl: window.manifestUrl,
+      fetch: window.fetch,
     });
-
-    const { stopsIndex } = await loadTimetable({ fetch: fetchStub });
-    const matches = stopsIndex.findStopsByName('Times Sq');
-
-    expect(matches.map((s) => s.name)).toContain(FIXTURE_KNOWN_STOP_NAME);
+    expect(stopsIndex.findStopsByName('Times Sq').map((s) => s.name)).toContain(
+      FIXTURE_KNOWN_STOP_NAME,
+    );
   });
 });
