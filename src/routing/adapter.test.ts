@@ -10,7 +10,7 @@ describe('buildQuery', () => {
       origin: 1,
       destination: 2,
       mode: 'depart-at',
-      dateTime: new Date('2026-05-20T14:30:00Z'),
+      dateTime: new Date('2026-05-20T14:30:00-04:00'),
     };
 
     const query = buildQuery(tripQuery);
@@ -25,7 +25,7 @@ describe('buildQuery', () => {
       origin: null,
       destination: 2,
       mode: 'depart-at',
-      dateTime: new Date('2026-05-20T14:30:00Z'),
+      dateTime: new Date('2026-05-20T14:30:00-04:00'),
     };
 
     expect(() => buildQuery(tripQuery)).toThrow('Origin and destination are required');
@@ -36,7 +36,7 @@ describe('buildQuery', () => {
       origin: 1,
       destination: null,
       mode: 'depart-at',
-      dateTime: new Date('2026-05-20T14:30:00Z'),
+      dateTime: new Date('2026-05-20T14:30:00-04:00'),
     };
 
     expect(() => buildQuery(tripQuery)).toThrow('Origin and destination are required');
@@ -49,7 +49,7 @@ describe('buildRangeQuery', () => {
       origin: 1,
       destination: 2,
       mode: 'depart-at',
-      dateTime: new Date('2026-05-20T14:30:00Z'),
+      dateTime: new Date('2026-05-20T14:30:00-04:00'),
     };
 
     const query = buildRangeQuery(tripQuery);
@@ -71,7 +71,7 @@ describe('extractItineraries', () => {
       origin: 1,
       destination: 2,
       mode: 'depart-at',
-      dateTime: new Date('2026-05-20T14:30:00Z'),
+      dateTime: new Date('2026-05-20T14:30:00-04:00'),
     };
 
     const itineraries = extractItineraries(mockRouter, tripQuery);
@@ -90,7 +90,7 @@ describe('extractItineraries', () => {
       origin: 1,
       destination: 2,
       mode: 'depart-at',
-      dateTime: new Date('2026-05-20T14:30:00Z'),
+      dateTime: new Date('2026-05-20T14:30:00-04:00'),
     };
 
     const itineraries = extractItineraries(mockRouter, tripQuery);
@@ -124,7 +124,7 @@ describe('extractItineraries', () => {
       origin: 1,
       destination: 2,
       mode: 'depart-at',
-      dateTime: new Date('2026-05-20T00:00:00Z'),
+      dateTime: new Date('2026-05-20T00:00:00-04:00'),
     };
 
     const itineraries = extractItineraries(mockRouter, tripQuery);
@@ -155,15 +155,15 @@ describe('filterItineraries', () => {
         toStopId: 2,
         fromStopName: '59 St',
         toStopName: '14 St',
-        departureTime: new Date('2026-05-20T14:30:00Z'),
-        arrivalTime: new Date('2026-05-20T15:00:00Z'),
+        departureTime: new Date('2026-05-20T14:30:00-04:00'),
+        arrivalTime: new Date('2026-05-20T15:00:00-04:00'),
         duration: 30,
         routeName: 'Broadway Express',
         routeShortName: 'Q',
       },
     ],
-    departureTime: new Date('2026-05-20T14:30:00Z'),
-    arrivalTime: new Date('2026-05-20T15:00:00Z'),
+    departureTime: new Date('2026-05-20T14:30:00-04:00'),
+    arrivalTime: new Date('2026-05-20T15:00:00-04:00'),
     totalDuration: 30,
     transferCount: 0,
   };
@@ -235,8 +235,8 @@ describe('filterItineraries', () => {
           toStopId: 2,
           fromStopName: '59 St',
           toStopName: '14 St',
-          departureTime: new Date('2026-05-20T14:30:00Z'),
-          arrivalTime: new Date('2026-05-20T14:35:00Z'),
+          departureTime: new Date('2026-05-20T14:30:00-04:00'),
+          arrivalTime: new Date('2026-05-20T14:35:00-04:00'),
           duration: 5,
         },
       ],
@@ -273,8 +273,8 @@ describe('filterItineraries', () => {
           toStopId: 2,
           fromStopName: '59 St',
           toStopName: 'Times Sq',
-          departureTime: new Date('2026-05-20T14:30:00Z'),
-          arrivalTime: new Date('2026-05-20T14:45:00Z'),
+          departureTime: new Date('2026-05-20T14:30:00-04:00'),
+          arrivalTime: new Date('2026-05-20T14:45:00-04:00'),
           duration: 15,
           routeShortName: 'N',
         },
@@ -284,8 +284,8 @@ describe('filterItineraries', () => {
           toStopId: 3,
           fromStopName: 'Times Sq',
           toStopName: 'Times Sq',
-          departureTime: new Date('2026-05-20T14:45:00Z'),
-          arrivalTime: new Date('2026-05-20T14:50:00Z'),
+          departureTime: new Date('2026-05-20T14:45:00-04:00'),
+          arrivalTime: new Date('2026-05-20T14:50:00-04:00'),
           duration: 5,
         },
         {
@@ -294,14 +294,14 @@ describe('filterItineraries', () => {
           toStopId: 4,
           fromStopName: 'Times Sq',
           toStopName: '14 St',
-          departureTime: new Date('2026-05-20T14:50:00Z'),
-          arrivalTime: new Date('2026-05-20T15:05:00Z'),
+          departureTime: new Date('2026-05-20T14:50:00-04:00'),
+          arrivalTime: new Date('2026-05-20T15:05:00-04:00'),
           duration: 15,
           routeShortName: 'L',
         },
       ],
-      departureTime: new Date('2026-05-20T14:30:00Z'),
-      arrivalTime: new Date('2026-05-20T15:05:00Z'),
+      departureTime: new Date('2026-05-20T14:30:00-04:00'),
+      arrivalTime: new Date('2026-05-20T15:05:00-04:00'),
       totalDuration: 35,
       transferCount: 1,
     };
