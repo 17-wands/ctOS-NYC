@@ -20,11 +20,13 @@
     "test:e2e": "playwright test",
     "build:timetable": "tsx scripts/build-timetable.ts",
     "build:schedule-window": "tsx scripts/build-schedule-window.ts",
+    "publish:schedule": "tsx scripts/publish-schedule.ts",
     "fixtures:rebuild": "cd tests/fixtures/gtfs-mini && rm -f ../gtfs-mini.zip && zip -j ../gtfs-mini.zip ./*.txt"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "@fontsource/inter-tight": "^5.2.7",
+    "@vercel/blob": "^2.4.0",
     "gtfs-realtime-bindings": "^1.1.1",
     "maplibre-gl": "^5.24.0",
     "minotor": "^11.2.3",
