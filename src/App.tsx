@@ -12,6 +12,7 @@ import { ItineraryList, ItineraryPanel, DisruptionSummary } from './itinerary';
 import { extractWindowedItineraries, filterItineraries } from './routing';
 import { Map } from './map';
 import { BottomSheet } from './components/BottomSheet';
+import { FreshnessBar } from './freshness';
 import { fetchRealtimeData } from './realtime/client';
 import { useOnlineStatus } from './realtime/useOnlineStatus';
 import { annotateItinerary } from './routing/matcher';
@@ -46,6 +47,27 @@ export function App() {
     excludedStops: new Set(),
   });
   const [bottomSheetExpanded, setBottomSheetExpanded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // On-request refresh: re-poll the live overlay and re-validate the schedule
+  // window in the background (no boot flash). Cadence polling continues too.
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const [data] = await Promise.all([
+        fetchRealtimeData(),
+        loadTimetable()
+          .then((bundle) => setState({ kind: 'ready', bundle }))
+          .catch((error) => {
+            // Keep the current bundle on a failed refresh; don't break the session.
+            console.error('Schedule refresh failed:', error);
+          }),
+      ]);
+      setRealtimeState(data ? { kind: 'loaded', data } : { kind: 'error' });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleQuerySubmit = (query: TripQuery, bundle: TimetableBundle) => {
     setRoutingState({ kind: 'computing' });
@@ -153,10 +175,19 @@ export function App() {
         <span className="wordmark">ctOS</span>
         <span className="wordmark-region">NYC</span>
       </header>
+      {state.kind === 'ready' && (
+        <FreshnessBar
+          feedPublishedAt={state.bundle.feedPublishedAt}
+          liveUpdatedAt={realtimeState.kind === 'loaded' ? realtimeState.data.generatedAt : null}
+          online={online}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+        />
+      )}
       <main className="app-main">
         {renderMain(
           isSandbox,
-          !online,
+          online,
           state,
           routingState,
           annotatedItineraries,
@@ -175,7 +206,7 @@ export function App() {
 
 function renderMain(
   isSandbox: boolean,
-  offline: boolean,
+  online: boolean,
   state: LoadState,
   routingState: RoutingState,
   annotatedItineraries: (Itinerary | AnnotatedItinerary)[],
@@ -189,7 +220,7 @@ function renderMain(
 ) {
   if (isSandbox) return <ComponentsSandbox />;
   if (state.kind === 'loading') return <BootSequence stage={state.stage} />;
-  if (state.kind === 'error') return <ErrorState error={state.error} offline={offline} />;
+  if (state.kind === 'error') return <ErrorState error={state.error} offline={!online} />;
 
   const resultsContent =
     routingState.kind === 'results' ? (

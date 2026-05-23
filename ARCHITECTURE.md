@@ -311,6 +311,13 @@ plan can be produced with no connection — the underground-subway case:
 `useOnlineStatus` (`src/realtime/useOnlineStatus.ts`) tracks connectivity; the
 boot fault screen distinguishes "offline, nothing cached yet" from other faults.
 
+**Freshness and refresh.** A `FreshnessBar` (`src/freshness/`) reports the loaded
+schedule's publish time (`feedPublishedAt`), the live overlay's last update
+(`generatedAt`), and connectivity. The live overlay polls on a ~60s cadence; the
+bar also exposes an on-request refresh that re-polls the overlay and re-validates
+the schedule window in the background (the manifest's `StaleWhileRevalidate`
+cache surfaces a newer window without a boot flash or redeploy).
+
 ## 15. Open questions and future work
 
 - **Realtime-aware routing.** Feeding live trip updates into the timetable so the

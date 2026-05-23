@@ -68,7 +68,14 @@ app opens, loads, and answers.
 - **Station search.** Type-ahead search over every subway station in the GTFS
   data, by name. Selecting a result sets it as origin or destination.
 - **Nearest station.** On request, use device geolocation to pick the closest
-  station as the origin. Geolocation is never used without an explicit action.
+  station as the origin. Geolocation is opt-in: it runs only on an explicit tap,
+  reads the position once, and is never stored or tracked — the button says so.
+- **Freshness and refresh.** Show when the loaded schedule was published and when
+  the live overlay last updated, plus an online/offline indicator. The live data
+  refreshes on a cadence and on demand; the rider can force a refresh.
+- **Offline planning.** Once the app has loaded, a plan can be produced with no
+  connection — the schedule window is cached on the device. Live annotations are
+  suppressed offline and resume when the connection returns.
 - **Time selection.** Choose "depart at" or "arrive by" with a date and time;
   default to departing now.
 - **Itinerary results.** Run the in-memory router for the chosen origin,
@@ -131,8 +138,6 @@ private endpoints.
 
 ## 10. Stretch and future work
 
-- **Offline planner.** Cache the app shell and the schedule so a plan can be
-  produced with no connection at all.
 - **More modes.** Buses and commuter rail.
 - **Address geocoding.** Door-to-door planning from typed addresses.
 - **Saved trips.** On-device favorites and quick re-runs of common commutes.
