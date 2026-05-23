@@ -62,4 +62,18 @@ describe('ErrorState', () => {
     expect(within(region).getByText('STAGE:UNKNOWN')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('Unexpected');
   });
+
+  it('frames the fault as a connectivity problem when offline', () => {
+    render(
+      <ErrorState
+        error={new TimetableLoadError('fetch', 'Network error loading manifest')}
+        timestamp="t"
+        offline
+      />,
+    );
+
+    const region = screen.getByRole('region', { name: 'ROUTING SUBSYSTEM FAULT' });
+    expect(within(region).getByText('LINK:OFFLINE')).toBeInTheDocument();
+    expect(within(region).getByText(/NO CACHED SCHEDULE/)).toBeInTheDocument();
+  });
 });

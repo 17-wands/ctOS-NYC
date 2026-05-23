@@ -9,6 +9,8 @@ type ErrorStateProps = {
   error: TimetableLoadError | Error;
   /** ISO timestamp shown in the panel header. Defaults to now() on render. */
   timestamp?: string;
+  /** When true, frame the fault as a connectivity problem with no cached schedule. */
+  offline?: boolean;
 };
 
 const STAGE_LABELS: Record<LoadStage, string> = {
@@ -22,10 +24,16 @@ const STAGE_LABELS: Record<LoadStage, string> = {
  * critical (BREACH) severity rail per DESIGN.md §8 and reports the stage,
  * message, and timestamp without diagnostic narration.
  */
-export function ErrorState({ error, timestamp }: ErrorStateProps) {
+export function ErrorState({ error, timestamp, offline = false }: ErrorStateProps) {
   const stamp = timestamp ?? new Date().toISOString();
-  const identifier =
-    error instanceof TimetableLoadError ? STAGE_LABELS[error.stage] : 'STAGE:UNKNOWN';
+  const identifier = offline
+    ? 'LINK:OFFLINE'
+    : error instanceof TimetableLoadError
+      ? STAGE_LABELS[error.stage]
+      : 'STAGE:UNKNOWN';
+  const hint = offline
+    ? 'OFFLINE // NO CACHED SCHEDULE — RECONNECT TO LOAD'
+    : 'SYSTEM HALTED // RELOAD TO RETRY';
 
   return (
     <Panel
@@ -38,7 +46,7 @@ export function ErrorState({ error, timestamp }: ErrorStateProps) {
       <div className={styles.body} role="alert">
         <p className={styles.message}>{error.message}</p>
         <p className={styles.hint}>
-          <Mono>SYSTEM HALTED // RELOAD TO RETRY</Mono>
+          <Mono>{hint}</Mono>
         </p>
       </div>
     </Panel>
