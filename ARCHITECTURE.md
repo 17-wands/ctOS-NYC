@@ -295,12 +295,26 @@ to write to the Blob store. The MTA feeds need no API key.
 | Query to itinerary, after the timetable has loaded | under ~1 s on a mid-range phone |
 | Lighthouse mobile — performance and accessibility | tracked per release |
 
-## 14. Open questions and future work
+## 14. Offline support
 
-- **Offline planner.** A service worker caching the app shell and `timetable.pb`
-  so a plan can be produced with no connection. Left out of the MVP.
+A service worker (via `vite-plugin-pwa` / Workbox, configured in `vite.config.ts`)
+precaches the app shell and applies runtime caching to the schedule assets so a
+plan can be produced with no connection — the underground-subway case:
+
+- **`manifest.json`** — `StaleWhileRevalidate`: boots instantly from cache, then
+  refreshes in the background when online.
+- **`.pb` day-files and stops index** — `CacheFirst`, long-lived (immutable, so
+  safe), accepting opaque cross-origin responses from the Blob store.
+- **`/api/realtime`** — `NetworkOnly`: the live overlay is never cached; it is an
+  online-only annotation.
+
+`useOnlineStatus` (`src/realtime/useOnlineStatus.ts`) tracks connectivity; the
+boot fault screen distinguishes "offline, nothing cached yet" from other faults.
+
+## 15. Open questions and future work
+
 - **Realtime-aware routing.** Feeding live trip updates into the timetable so the
   router itself accounts for delays. minotor has no native GTFS-realtime support,
   so this needs custom integration and is deferred.
-- **Additional modes.** Buses and commuter rail would enlarge `timetable.pb` and
-  add feeds; revisit budgets if pursued.
+- **Additional modes.** Buses and commuter rail would enlarge the per-day
+  timetables and add feeds; revisit budgets if pursued.

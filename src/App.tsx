@@ -13,6 +13,7 @@ import { extractWindowedItineraries, filterItineraries } from './routing';
 import { Map } from './map';
 import { BottomSheet } from './components/BottomSheet';
 import { fetchRealtimeData } from './realtime/client';
+import { useOnlineStatus } from './realtime/useOnlineStatus';
 import { annotateItinerary } from './routing/matcher';
 import type { RealtimeResponse } from './realtime/types';
 import type { Itinerary, ExclusionState } from './routing';
@@ -36,6 +37,7 @@ type RealtimeState =
 
 export function App() {
   const isSandbox = window.location.pathname === '/components';
+  const online = useOnlineStatus();
   const [state, setState] = useState<LoadState>({ kind: 'loading', stage: 'fetch' });
   const [routingState, setRoutingState] = useState<RoutingState>({ kind: 'idle' });
   const [realtimeState, setRealtimeState] = useState<RealtimeState>({ kind: 'idle' });
@@ -154,6 +156,7 @@ export function App() {
       <main className="app-main">
         {renderMain(
           isSandbox,
+          !online,
           state,
           routingState,
           annotatedItineraries,
@@ -172,6 +175,7 @@ export function App() {
 
 function renderMain(
   isSandbox: boolean,
+  offline: boolean,
   state: LoadState,
   routingState: RoutingState,
   annotatedItineraries: (Itinerary | AnnotatedItinerary)[],
@@ -185,7 +189,7 @@ function renderMain(
 ) {
   if (isSandbox) return <ComponentsSandbox />;
   if (state.kind === 'loading') return <BootSequence stage={state.stage} />;
-  if (state.kind === 'error') return <ErrorState error={state.error} />;
+  if (state.kind === 'error') return <ErrorState error={state.error} offline={offline} />;
 
   const resultsContent =
     routingState.kind === 'results' ? (
