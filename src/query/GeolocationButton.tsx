@@ -102,6 +102,9 @@ export function GeolocationButton({
       >
         {isLoading ? 'ACQUIRING POSITION...' : 'USE MY LOCATION'}
       </Button>
+      <p className={styles.hint}>
+        Used once to find your nearest station. Never stored or tracked.
+      </p>
       {state === 'error' && errorType && (
         <Alert level={ERROR_MESSAGES[errorType].severity}>{ERROR_MESSAGES[errorType].text}</Alert>
       )}

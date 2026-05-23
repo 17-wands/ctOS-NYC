@@ -3,3 +3,12 @@
   flex-direction: column;
   gap: 8px;
 }
+
+.hint {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  line-height: var(--leading-micro);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-ash);
+}
