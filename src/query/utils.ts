@@ -62,13 +62,15 @@ export function parseDateTimeLocal(str: string): Date {
 export function validateQuery(query: TripQuery): QueryValidation {
   const errors: QueryValidation['errors'] = {};
 
-  if (!query.origin) {
+  // StopId is a number and can legitimately be 0 (the first stop in the feed),
+  // so check for null explicitly rather than falsiness.
+  if (query.origin === null) {
     errors.origin = 'ORIGIN REQUIRED';
   }
-  if (!query.destination) {
+  if (query.destination === null) {
     errors.destination = 'DESTINATION REQUIRED';
   }
-  if (query.origin && query.destination && query.origin === query.destination) {
+  if (query.origin !== null && query.destination !== null && query.origin === query.destination) {
     errors.destination = 'DESTINATION MUST DIFFER FROM ORIGIN';
   }
   if (query.dateTime < new Date()) {

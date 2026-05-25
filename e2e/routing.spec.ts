@@ -1,68 +1,34 @@
 import { expect, test } from '@playwright/test';
+import { bootToReady, mockApp, planTrip } from './support/app';
 
-// QUARANTINED: pre-existing failures (wrong port / boot text / unseeded timetable). Rebuild in #25 Stage 3b. Tracking: #29
-test.describe.fixme('Trip planning', () => {
-  test('completes a full trip planning flow', async ({ page }) => {
-    await page.goto('/');
-
-    await expect(page.getByText('ctOS')).toBeVisible();
-
-    await expect(page.getByText('BOOT SEQUENCE')).toBeVisible();
-
-    await expect(page.getByText('ROUTE QUERY')).toBeVisible({ timeout: 30000 });
-
-    const originInput = page.getByLabel('ORIGIN STATION');
-    await originInput.fill('Union');
-    await expect(page.getByText('14 St - Union Sq')).toBeVisible();
-    await page.getByText('14 St - Union Sq').click();
-
-    const destinationInput = page.getByLabel('DESTINATION STATION');
-    await destinationInput.fill('Times');
-    await expect(page.getByText('Times Sq-42 St')).toBeVisible();
-    await page.getByText('Times Sq-42 St').click();
-
-    const executeButton = page.getByRole('button', { name: 'EXECUTE QUERY' });
-    await expect(executeButton).toBeEnabled();
-    await executeButton.click();
-
-    await expect(page.getByText('COMPUTING ROUTES...')).toBeVisible();
-
-    await expect(page.getByRole('button').filter({ hasText: 'DURATION' })).toBeVisible({
-      timeout: 10000,
-    });
-
-    const firstItinerary = page.getByRole('button').filter({ hasText: 'DURATION' }).first();
-    await firstItinerary.click();
-
-    await expect(page.getByText('ITINERARY')).toBeVisible();
-    await expect(page.getByText('DEPART')).toBeVisible();
-    await expect(page.getByText('ARRIVE')).toBeVisible();
-
-    const mapCanvas = page.locator('.maplibregl-canvas');
-    await expect(mapCanvas).toBeVisible({ timeout: 5000 });
-
-    const mapContainer = page.locator('[data-testid="map-container"]');
-    await expect(mapContainer).toBeVisible();
+test.describe('Trip planning', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockApp(page);
   });
 
-  test('shows no routes found when no routes exist', async ({ page }) => {
-    await page.goto('/');
+  test('completes a full trip planning flow', async ({ page }) => {
+    const region = await bootToReady(page);
+    await expect(page.getByText('ctOS')).toBeVisible();
+    await planTrip(region, 'Times', 'Franklin');
 
-    await expect(page.getByText('ROUTE QUERY')).toBeVisible({ timeout: 30000 });
+    const firstItinerary = region.getByRole('button').filter({ hasText: 'DURATION' }).first();
+    await expect(firstItinerary).toBeVisible({ timeout: 10000 });
+    await firstItinerary.click();
 
-    const originInput = page.getByLabel('ORIGIN STATION');
-    await originInput.fill('Coney');
-    await expect(page.getByText('Coney Island - Stillwell Av')).toBeVisible();
-    await page.getByText('Coney Island - Stillwell Av').click();
+    const itineraryPanel = region.getByRole('region', { name: 'ITINERARY' });
+    await expect(itineraryPanel).toBeVisible();
+    await expect(itineraryPanel).toContainText('DEPART');
+    await expect(itineraryPanel).toContainText('ARRIVE');
 
-    const destinationInput = page.getByLabel('DESTINATION STATION');
-    await destinationInput.fill('Rockaway');
-    await expect(page.getByText('Far Rockaway - Mott Av')).toBeVisible();
-    await page.getByText('Far Rockaway - Mott Av').click();
+    await expect(page.locator('[data-testid="map-container"]')).toBeVisible();
+    await expect(page.locator('.maplibregl-canvas')).toBeVisible({ timeout: 5000 });
+  });
 
-    const executeButton = page.getByRole('button', { name: 'EXECUTE QUERY' });
-    await executeButton.click();
+  test('shows no routes found when none exist', async ({ page }) => {
+    const region = await bootToReady(page);
+    // Franklin St is the southern terminus; nothing runs north back to Times Sq.
+    await planTrip(region, 'Franklin', 'Times');
 
-    await expect(page.getByText('NO ROUTES FOUND')).toBeVisible({ timeout: 10000 });
+    await expect(region.getByText('NO ROUTES FOUND')).toBeVisible({ timeout: 10000 });
   });
 });

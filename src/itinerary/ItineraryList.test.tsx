@@ -112,7 +112,7 @@ describe('ItineraryList', () => {
     const items = screen.getAllByRole('button');
     if (items[0]) {
       fireEvent.click(items[0]);
-      expect(onSelect).toHaveBeenCalledWith(mockItineraries[0]);
+      expect(onSelect).toHaveBeenCalledWith(0);
     }
   });
 

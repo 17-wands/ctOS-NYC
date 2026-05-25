@@ -111,7 +111,7 @@ describe('extractItineraries', () => {
         {
           from: { id: 1, name: '59 St - Columbus Circle' },
           to: { id: 2, name: '14 St - Union Sq' },
-          route: { longName: 'Broadway Express', shortName: 'Q' },
+          route: { name: 'Q', type: 'SUBWAY' },
           departureTime: 870,
           arrivalTime: 900,
         },
@@ -145,7 +145,7 @@ describe('extractItineraries', () => {
       fromStopName: '59 St - Columbus Circle',
       toStopName: '14 St - Union Sq',
       duration: 30,
-      routeName: 'Broadway Express',
+      routeName: 'Q',
       routeShortName: 'Q',
     });
     expect(itineraries[0]?.totalDuration).toBe(30);
@@ -345,7 +345,7 @@ describe('extractWindowedItineraries', () => {
         {
           from: { id: 1, name: 'A' },
           to: { id: 2, name: 'B' },
-          route: { longName: shortName, shortName },
+          route: { name: shortName, type: 'SUBWAY' },
           departureTime: depMin,
           arrivalTime: arrMin,
         },

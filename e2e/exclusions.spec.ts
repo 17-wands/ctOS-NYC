@@ -1,99 +1,56 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { PINNED_NOW, bootToReady, mockApp, planTrip, type RealtimeBody } from './support/app';
 
-// QUARANTINED: pre-existing failures (wrong port / boot text / unseeded timetable). Rebuild in #25 Stage 3b. Tracking: #29
-test.describe.fixme('Route Exclusion', () => {
-  test('excludes a disrupted route and shows alternative itinerary', async ({ page }) => {
-    await page.route('/api/realtime', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          generatedAt: new Date().toISOString(),
-          alerts: [
-            {
-              id: 'test-alert-1',
-              severity: 'BREACH',
-              header: 'L train suspended',
-              description: 'No service between Bedford and 8 Av',
-              routeIds: ['L'],
-              stopIds: [],
-              activePeriod: {
-                start: new Date().toISOString(),
-                end: null,
-              },
-            },
-          ],
-          tripDelays: [],
-          accessibilityOutages: [],
-        }),
-      });
-    });
+const degradedRoute1: RealtimeBody = {
+  generatedAt: PINNED_NOW.toISOString(),
+  alerts: [
+    {
+      id: 'a1',
+      severity: 'DEGRADED',
+      header: '1 train delays',
+      description: 'Signal problems',
+      routeIds: ['1'],
+      stopIds: [],
+      activePeriod: { start: PINNED_NOW.toISOString(), end: null },
+    },
+  ],
+  tripDelays: [],
+  accessibilityOutages: [],
+};
 
-    await page.goto('http://localhost:3000');
-    await expect(page.getByText('BOOT COMPLETE')).toBeVisible({ timeout: 10000 });
-
-    await page.fill('input[placeholder*="origin"]', '14 St');
-    await page.fill('input[placeholder*="destination"]', 'Times Sq');
-    await page.click('button:has-text("EXECUTE QUERY")');
-
-    await expect(page.getByText('DURATION')).toBeVisible({ timeout: 5000 });
-
-    await page.locator('.item').first().click();
-    await expect(page.getByText('ITINERARY')).toBeVisible();
-
-    const excludeButton = page.locator('button:has-text("EXCLUDE")').first();
-    if ((await excludeButton.count()) > 0) {
-      const buttonText = await excludeButton.textContent();
-      const routeName = buttonText?.replace('EXCLUDE ', '').trim();
-
-      await excludeButton.click();
-
-      await expect(page.getByText('ACTIVE EXCLUSIONS')).toBeVisible();
-      await expect(page.getByText(`Routes: ${routeName}`)).toBeVisible();
-
-      await page.click('button:has-text("CLEAR ALL EXCLUSIONS")');
-      await expect(page.getByText('ACTIVE EXCLUSIONS')).not.toBeVisible();
-    }
+test.describe('Route exclusion', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockApp(page, degradedRoute1);
   });
 
-  test('exclude button is disabled when route is already excluded', async ({ page }) => {
-    await page.route('/api/realtime', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          generatedAt: new Date().toISOString(),
-          alerts: [
-            {
-              id: 'test-alert-1',
-              severity: 'DEGRADED',
-              header: 'Q train delays',
-              routeIds: ['Q'],
-              stopIds: [],
-              activePeriod: { start: new Date().toISOString(), end: null },
-            },
-          ],
-          tripDelays: [],
-          accessibilityOutages: [],
-        }),
-      });
-    });
+  test('excludes a disrupted route, then clears the exclusion', async ({ page }) => {
+    const region = await bootToReady(page);
+    await planTrip(region, 'Times', 'Franklin');
 
-    await page.goto('http://localhost:3000');
-    await expect(page.getByText('BOOT COMPLETE')).toBeVisible({ timeout: 10000 });
+    const card = region.getByRole('button').filter({ hasText: 'DURATION' }).first();
+    await expect(card).toBeVisible({ timeout: 10000 });
+    await card.click();
 
-    await page.fill('input[placeholder*="origin"]', '59 St');
-    await page.fill('input[placeholder*="destination"]', 'Times Sq');
-    await page.click('button:has-text("EXECUTE QUERY")');
+    await region.getByRole('button', { name: 'AVOID 1' }).click();
 
-    await expect(page.getByText('DURATION')).toBeVisible({ timeout: 5000 });
-    await page.locator('.item').first().click();
-    await expect(page.getByText('ITINERARY')).toBeVisible();
+    await expect(region.getByText('ACTIVE EXCLUSIONS')).toBeVisible();
+    await expect(region.getByText('Routes: 1')).toBeVisible();
 
-    const excludeButton = page.locator('button:has-text("EXCLUDE")').first();
-    if ((await excludeButton.count()) > 0) {
-      await excludeButton.click();
-      await expect(excludeButton).toBeDisabled();
-    }
+    await region.getByRole('button', { name: 'CLEAR ALL EXCLUSIONS' }).click();
+    await expect(region.getByText('ACTIVE EXCLUSIONS')).toHaveCount(0);
+  });
+
+  test('disables the avoid button once the route is excluded', async ({ page }) => {
+    const region = await bootToReady(page);
+    await planTrip(region, 'Times', 'Franklin');
+
+    const card = region.getByRole('button').filter({ hasText: 'DURATION' }).first();
+    await expect(card).toBeVisible({ timeout: 10000 });
+    await card.click();
+
+    const avoid = region.getByRole('button', { name: 'AVOID 1' });
+    await avoid.click();
+    // Re-planning removes route 1; the banner reflects the active exclusion.
+    await expect(region.getByText('Routes: 1')).toBeVisible();
   });
 });

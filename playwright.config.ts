@@ -9,6 +9,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
+    // Pin to the MTA's zone so datetime-local inputs and the app's NYC-local
+    // schedule logic agree regardless of the CI runner's timezone.
+    timezoneId: 'America/New_York',
   },
   projects: [
     {
