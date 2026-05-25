@@ -82,9 +82,8 @@ export function App() {
     }
   };
 
-  const handleItinerarySelect = (itinerary: Itinerary) => {
+  const handleItinerarySelect = (selectedIndex: number) => {
     if (routingState.kind === 'results') {
-      const selectedIndex = routingState.itineraries.indexOf(itinerary);
       setRoutingState({ ...routingState, selectedIndex });
     }
   };
@@ -213,7 +212,7 @@ function renderMain(
   exclusionState: ExclusionState,
   bottomSheetExpanded: boolean,
   onQuerySubmit: (query: TripQuery, bundle: TimetableBundle) => void,
-  onItinerarySelect: (itinerary: Itinerary) => void,
+  onItinerarySelect: (index: number) => void,
   onExcludeRoute: (routeShortName: string) => void,
   onClearExclusions: () => void,
   onToggleBottomSheet: () => void,

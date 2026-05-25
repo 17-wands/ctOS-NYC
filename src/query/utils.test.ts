@@ -153,6 +153,17 @@ describe('validateQuery', () => {
     expect(result.errors.destination).toBe('DESTINATION MUST DIFFER FROM ORIGIN');
   });
 
+  it('treats stop id 0 as a valid origin and destination', () => {
+    // StopId is the row order of stops.txt, so the first stop has id 0.
+    const result = validateQuery({ ...validQuery, origin: 0, destination: 1 });
+    expect(result.isValid).toBe(true);
+    expect(result.errors.origin).toBeUndefined();
+
+    const swapped = validateQuery({ ...validQuery, origin: 1, destination: 0 });
+    expect(swapped.isValid).toBe(true);
+    expect(swapped.errors.destination).toBeUndefined();
+  });
+
   it('fails when dateTime is in the past', () => {
     const query = { ...validQuery, dateTime: new Date(Date.now() - 60000) };
     const result = validateQuery(query);

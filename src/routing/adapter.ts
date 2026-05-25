@@ -23,7 +23,7 @@ function isTransferLeg(leg: Leg): leg is Leg & { type: unknown } {
 }
 
 export function buildQuery(tripQuery: TripQuery): Query {
-  if (!tripQuery.origin || !tripQuery.destination) {
+  if (tripQuery.origin === null || tripQuery.destination === null) {
     throw new Error('Origin and destination are required');
   }
 
@@ -37,7 +37,7 @@ export function buildQuery(tripQuery: TripQuery): Query {
 }
 
 export function buildRangeQuery(tripQuery: TripQuery): RangeQuery {
-  if (!tripQuery.origin || !tripQuery.destination) {
+  if (tripQuery.origin === null || tripQuery.destination === null) {
     throw new Error('Origin and destination are required');
   }
 
@@ -75,8 +75,11 @@ function mapRoute(route: Route, referenceMidnight: Date): Itinerary {
       departureTime = instantFromMinutes(referenceMidnight, leg.departureTime);
       arrivalTime = instantFromMinutes(referenceMidnight, leg.arrivalTime);
       duration = leg.arrivalTime - leg.departureTime;
-      routeName = (leg.route as { longName?: string }).longName;
-      routeShortName = (leg.route as { shortName?: string }).shortName;
+      // minotor's ServiceRouteInfo exposes `name` (the GTFS route_short_name),
+      // not separate long/short names.
+      const name = (leg.route as { name?: string }).name;
+      routeName = name;
+      routeShortName = name;
     } else if (isTransferLeg(leg)) {
       type = 'transfer';
       duration = 'minTransferTime' in leg ? ((leg.minTransferTime as number) ?? 2) : 2;
@@ -145,7 +148,7 @@ function extractFromRouter(
  * is the entry point the app uses across the loaded window.
  */
 export function extractItineraries(router: Router, tripQuery: TripQuery): Itinerary[] {
-  if (!tripQuery.origin || !tripQuery.destination) {
+  if (tripQuery.origin === null || tripQuery.destination === null) {
     throw new Error('Origin and destination are required');
   }
   const referenceMidnight = nycMidnight(nycDateString(tripQuery.dateTime));
@@ -167,7 +170,7 @@ export function extractItineraries(router: Router, tripQuery: TripQuery): Itiner
  * and sorted by departure.
  */
 export function extractWindowedItineraries(days: ScheduleDay[], tripQuery: TripQuery): Itinerary[] {
-  if (!tripQuery.origin || !tripQuery.destination) {
+  if (tripQuery.origin === null || tripQuery.destination === null) {
     throw new Error('Origin and destination are required');
   }
 

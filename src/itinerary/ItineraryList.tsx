@@ -6,7 +6,7 @@ import styles from './ItineraryList.module.css';
 
 type ItineraryListProps = {
   itineraries: (Itinerary | AnnotatedItinerary)[];
-  onSelect: (itinerary: Itinerary | AnnotatedItinerary) => void;
+  onSelect: (index: number) => void;
   selectedIndex?: number;
 };
 
@@ -27,7 +27,7 @@ export function ItineraryList({ itineraries, onSelect, selectedIndex }: Itinerar
           className={styles.item}
           data-selected={index === selectedIndex}
           data-severity={'worstSeverity' in itinerary ? itinerary.worstSeverity : undefined}
-          onClick={() => onSelect(itinerary)}
+          onClick={() => onSelect(index)}
           type="button"
         >
           <div className={styles.times}>
