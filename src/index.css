@@ -8,10 +8,39 @@ html {
   box-sizing: border-box;
 }
 
+/*
+ * Visible keyboard focus (DESIGN.md §13: "Provide readable focus states").
+ * Applies to keyboard navigation only (:focus-visible), using the scan-blue
+ * accent with an offset so it reads against any panel background.
+ */
+:focus-visible {
+  outline: var(--border-strong) solid var(--color-blue-scan);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :focus-visible {
+    transition: outline-offset var(--duration-micro, 100ms) var(--easing-mechanical, linear);
+  }
+}
+
 html,
 body,
 #root {
   height: 100%;
+}
+
+/* Visually hidden but available to screen readers (for live announcements). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 body {

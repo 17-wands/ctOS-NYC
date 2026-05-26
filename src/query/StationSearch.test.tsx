@@ -39,7 +39,7 @@ describe('StationSearch', () => {
       />,
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.change(input, { target: { value: 'Times' } });
 
     await waitFor(() => {
@@ -60,7 +60,7 @@ describe('StationSearch', () => {
       />,
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.change(input, { target: { value: 'St' } });
 
     await waitFor(() => {
@@ -86,7 +86,7 @@ describe('StationSearch', () => {
       />,
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.change(input, { target: { value: 'Union' } });
 
     await waitFor(() => {
@@ -116,7 +116,7 @@ describe('StationSearch', () => {
       />,
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.change(input, { target: { value: 'St' } });
 
     await waitFor(() => {
@@ -149,7 +149,7 @@ describe('StationSearch', () => {
       />,
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.change(input, { target: { value: 'Union' } });
 
     await waitFor(() => {
@@ -178,7 +178,7 @@ describe('StationSearch', () => {
       />,
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     fireEvent.change(input, { target: { value: 'Times' } });
 
     await waitFor(() => {
@@ -225,7 +225,7 @@ describe('StationSearch', () => {
     );
 
     expect(screen.getByText('ORIGIN REQUIRED')).toBeInTheDocument();
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     expect(input).toHaveAttribute('data-error', 'true');
   });
 
@@ -241,7 +241,7 @@ describe('StationSearch', () => {
       />,
     );
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('combobox');
     // Search for something that definitely won't match
     fireEvent.change(input, { target: { value: 'ZZZZZZZZZ' } });
 

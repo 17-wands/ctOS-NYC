@@ -139,14 +139,14 @@ The color system should feel industrial, administrative, and sensor-driven. Most
 | `carbon` | `#101317` | Secondary background, cards, panels |
 | `gunmetal` | `#1B2026` | Nested panels, inactive modules |
 | `slate` | `#2A3139` | Borders, inactive states, dividers |
-| `ash` | `#7D8792` | Secondary text, labels, captions |
+| `ash` | `#8B95A0` | Secondary text, labels, captions |
 | `whiteout` | `#E8EEF2` | Primary text on dark backgrounds |
 | `blue-scan` | `#39C7F3` | Live system state, scan highlights, selected objects |
 | `cyan-fog` | `#8EEBFF` | High-emphasis data, active trace lines |
 | `acid-lime` | `#C8F23A` | Confirmed, complete, authorized |
 | `amber-risk` | `#F5B74A` | Warning, degraded, pending review |
 | `red-lock` | `#FF3B30` | Critical, denied, breached, hostile |
-| `violet-signal` | `#8B5CF6` | Unknown, encrypted, synthetic, external signal |
+| `violet-signal` | `#9568F7` | Unknown, encrypted, synthetic, external signal |
 
 ### Color usage ratios
 - 70% black / near-black system surfaces
@@ -612,14 +612,14 @@ Powerful workflows must include permissions, confirmations, logs, and review.
   --color-carbon: #101317;
   --color-gunmetal: #1B2026;
   --color-slate: #2A3139;
-  --color-ash: #7D8792;
+  --color-ash: #8B95A0;
   --color-whiteout: #E8EEF2;
   --color-blue-scan: #39C7F3;
   --color-cyan-fog: #8EEBFF;
   --color-acid-lime: #C8F23A;
   --color-amber-risk: #F5B74A;
   --color-red-lock: #FF3B30;
-  --color-violet-signal: #8B5CF6;
+  --color-violet-signal: #9568F7;
 
   --radius-none: 0;
   --radius-sm: 2px;
