@@ -183,6 +183,9 @@ export function App() {
           onRefresh={handleRefresh}
         />
       )}
+      <p className="sr-only" role="status" aria-live="polite">
+        {routeStatusMessage(routingState, annotatedItineraries.length)}
+      </p>
       <main className="app-main">
         {renderMain(
           isSandbox,
@@ -201,6 +204,15 @@ export function App() {
       </main>
     </div>
   );
+}
+
+/** Screen-reader announcement for the routing lifecycle (polite live region). */
+function routeStatusMessage(routingState: RoutingState, resultCount: number): string {
+  if (routingState.kind === 'computing') return 'Computing routes';
+  if (routingState.kind === 'results') {
+    return resultCount === 0 ? 'No routes found' : `${resultCount} routes found`;
+  }
+  return '';
 }
 
 function renderMain(

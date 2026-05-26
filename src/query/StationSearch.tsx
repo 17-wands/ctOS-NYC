@@ -136,6 +136,7 @@ export function StationSearch({
         ref={inputRef}
         type="text"
         id={id}
+        role="combobox"
         className={styles.input}
         value={inputValue}
         onChange={handleInputChange}
