@@ -244,6 +244,11 @@ function renderMain(
         {routingState.selectedIndex !== undefined &&
           annotatedItineraries[routingState.selectedIndex] && (
             <>
+              <ItineraryPanel
+                itinerary={annotatedItineraries[routingState.selectedIndex]!}
+                onExcludeRoute={onExcludeRoute}
+                excludedRoutes={exclusionState.excludedRoutes}
+              />
               {'worstSeverity' in annotatedItineraries[routingState.selectedIndex]! && (
                 <DisruptionSummary
                   itinerary={
@@ -253,11 +258,6 @@ function renderMain(
                   excludedRoutes={exclusionState.excludedRoutes}
                 />
               )}
-              <ItineraryPanel
-                itinerary={annotatedItineraries[routingState.selectedIndex]!}
-                onExcludeRoute={onExcludeRoute}
-                excludedRoutes={exclusionState.excludedRoutes}
-              />
             </>
           )}
       </>
