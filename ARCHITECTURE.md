@@ -278,9 +278,13 @@ to write to the Blob store. The MTA feeds need no API key.
   keyless. There is nothing to leak.
 - **The proxy is locked down.** Fixed MTA URL allowlist, no request-controlled
   targets, no rider data accepted, no identifying logs.
-- **Content Security Policy.** A strict CSP is served; the only outbound origins
-  are the realtime proxy and the tile source.
-- **No analytics or tracking.** No telemetry, ad, or attribution SDKs.
+- **Content Security Policy.** A strict CSP is served (`vercel.json` in prod,
+  `vite preview` for parity; single-sourced in `src/security/csp.ts`). The only
+  outbound origins are the same-origin realtime proxy, the keyless tile source,
+  and the Vercel Blob store hosting the schedule assets. `object-src 'none'`,
+  `frame-ancestors 'none'`, no `unsafe-eval`.
+- **No analytics or tracking.** No telemetry, ad, or attribution SDKs; an e2e
+  asserts the app contacts no non-allowlisted origin.
 - **No PII persistence.** Recent or saved trips live only in the device's
   `localStorage`; nothing syncs.
 - **Author privacy.** Commits use a no-reply identity; no personal location data
