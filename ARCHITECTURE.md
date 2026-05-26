@@ -190,6 +190,12 @@ and the `manifest.json` pointer is overwritten with a short cache TTL. This
 Vercel build. The publisher verifies each run end to end by re-fetching the
 manifest and deserializing the newest day-file and the stops index.
 
+The browser reaches these assets same-origin: `vercel.json` rewrites
+`/schedule/*` to the public Blob store, so the loader's default
+`/schedule/manifest.json` works with no per-build env var and the CSP needs no
+extra connect origin. Pointing at a different Blob store means updating that one
+rewrite destination.
+
 The single-day `scripts/build-timetable.ts` (`npm run build:timetable`) and the
 window builder (`npm run build:schedule-window`) remain runnable locally against a
 URL or local zip. We consume the published `minotor` npm package, so the app build
