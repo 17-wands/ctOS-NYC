@@ -30,6 +30,27 @@ describe('normalizeAlerts', () => {
     expect(firstAlert?.activePeriod).toHaveProperty('end');
   });
 
+  it('maps an open-ended activePeriod end (0) to null, not 1970', () => {
+    const feed = transit_realtime.FeedMessage.create({
+      header: { gtfsRealtimeVersion: '2.0', timestamp: 1_700_000_000 },
+      entity: [
+        {
+          id: 'open-ended',
+          alert: {
+            activePeriod: [{ start: 1_700_000_000, end: 0 }],
+            informedEntity: [{ routeId: 'L' }],
+            headerText: { translation: [{ text: 'L delays', language: 'en' }] },
+            descriptionText: { translation: [{ text: '', language: 'en' }] },
+          },
+        },
+      ],
+    });
+
+    const [alert] = normalizeAlerts(feed);
+    expect(alert?.activePeriod.start).toBe('2023-11-14T22:13:20.000Z');
+    expect(alert?.activePeriod.end).toBeNull();
+  });
+
   it('returns empty array when feed has no entities', () => {
     const emptyFeed = transit_realtime.FeedMessage.create({
       header: {
