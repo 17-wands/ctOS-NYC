@@ -10,6 +10,7 @@ import { TimePicker } from './TimePicker';
 import { ExclusionBanner } from './ExclusionBanner';
 import type { TripQuery, GeolocationError } from './types';
 import { roundToNextFiveMinutes, validateQuery } from './utils';
+import { RecentTrips, useRecentTrips, type StoredTrip } from '../trips';
 import styles from './QueryPanel.module.css';
 
 type QueryPanelProps = {
@@ -34,6 +35,7 @@ export function QueryPanel({
   const [mode, setMode] = useState<'depart-at' | 'arrive-by'>('depart-at');
   const [dateTime, setDateTime] = useState<Date>(roundToNextFiveMinutes(new Date()));
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const recent = useRecentTrips();
 
   const query: TripQuery = {
     origin: origin?.id ?? null,
@@ -46,9 +48,21 @@ export function QueryPanel({
 
   const handleSubmit = () => {
     setAttemptedSubmit(true);
-    if (validation.isValid) {
-      onQuerySubmit(query);
+    if (!validation.isValid) return;
+    if (origin?.sourceStopId && destination?.sourceStopId) {
+      recent.add({
+        origin: { sourceStopId: origin.sourceStopId, name: origin.name },
+        destination: { sourceStopId: destination.sourceStopId, name: destination.name },
+      });
     }
+    onQuerySubmit(query);
+  };
+
+  const handleSelectRecent = (trip: StoredTrip) => {
+    const nextOrigin = bundle.stopsIndex.findStopBySourceStopId(trip.origin.sourceStopId);
+    const nextDestination = bundle.stopsIndex.findStopBySourceStopId(trip.destination.sourceStopId);
+    if (nextOrigin) setOrigin(nextOrigin);
+    if (nextDestination) setDestination(nextDestination);
   };
 
   const handleGeolocationFound = (stop: Stop) => {
@@ -79,6 +93,7 @@ export function QueryPanel({
       {exclusionState && onClearExclusions && (
         <ExclusionBanner exclusionState={exclusionState} onClear={onClearExclusions} />
       )}
+      <RecentTrips trips={recent.trips} onSelect={handleSelectRecent} onClear={recent.clear} />
       <div className={styles.form}>
         <StationSearch
           stopsIndex={bundle.stopsIndex}
