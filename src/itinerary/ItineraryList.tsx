@@ -2,6 +2,7 @@ import type { Itinerary } from '../routing/types';
 import type { AnnotatedItinerary } from '../routing/disruptions';
 import { Label, Mono } from '../components/Text';
 import { formatTime, formatDuration } from '../routing/time';
+import { lineColor, lineTextColor } from '../routing/lineColors';
 import styles from './ItineraryList.module.css';
 
 type ItineraryListProps = {
@@ -52,13 +53,19 @@ export function ItineraryList({ itineraries, onSelect, selectedIndex }: Itinerar
           <div className={styles.legs}>
             {itinerary.legs
               .filter((leg) => leg.type === 'vehicle')
-              .map((leg, legIndex) => (
-                <div key={legIndex} className={styles.route}>
-                  <div className={styles.routeBadge}>
-                    <Mono>{leg.routeShortName || leg.routeName}</Mono>
+              .map((leg, legIndex) => {
+                const route = leg.routeShortName || leg.routeName;
+                return (
+                  <div key={legIndex} className={styles.route}>
+                    <div
+                      className={styles.routeBadge}
+                      style={{ backgroundColor: lineColor(route), color: lineTextColor(route) }}
+                    >
+                      <Mono>{route}</Mono>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
           </div>
         </button>
       ))}

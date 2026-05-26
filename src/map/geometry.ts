@@ -1,29 +1,45 @@
 import type { Itinerary } from '../routing/types';
 import type { StopsIndex } from 'minotor';
+import { lineColor } from '../routing/lineColors';
 
+/** Muted connector color for non-vehicle (transfer/walk) legs. */
+const CONNECTOR_COLOR = '#7d8792';
+
+/**
+ * One LineString per leg, each carrying a `color` property — vehicle legs use
+ * the official line color, transfers/walks use a muted connector — so the map
+ * renders the trace data-driven (`line-color: ['get', 'color']`).
+ */
 export function buildRouteTrace(
   itinerary: Itinerary,
   stopsIndex: StopsIndex,
-): GeoJSON.Feature<GeoJSON.LineString> {
-  const coordinates: [number, number][] = [];
+): GeoJSON.FeatureCollection<GeoJSON.LineString> {
+  const features: GeoJSON.Feature<GeoJSON.LineString>[] = [];
 
   for (const leg of itinerary.legs) {
     const fromStop = stopsIndex.findStopById(leg.fromStopId);
     const toStop = stopsIndex.findStopById(leg.toStopId);
 
+    const coordinates: [number, number][] = [];
     if (fromStop?.lon !== undefined && fromStop?.lat !== undefined) {
       coordinates.push([fromStop.lon, fromStop.lat]);
     }
     if (toStop?.lon !== undefined && toStop?.lat !== undefined) {
       coordinates.push([toStop.lon, toStop.lat]);
     }
+    if (coordinates.length < 2) continue;
+
+    const color =
+      leg.type === 'vehicle' ? lineColor(leg.routeShortName ?? leg.routeName) : CONNECTOR_COLOR;
+
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates },
+      properties: { color, legType: leg.type },
+    });
   }
 
-  return {
-    type: 'Feature',
-    geometry: { type: 'LineString', coordinates },
-    properties: {},
-  };
+  return { type: 'FeatureCollection', features };
 }
 
 export function buildStationMarkers(

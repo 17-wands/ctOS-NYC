@@ -74,7 +74,7 @@ function drawItinerary(map: maplibregl.Map, itinerary: Itinerary, stopsIndex: St
       type: 'line',
       source: 'route',
       layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': '#39c7f3', 'line-width': 4 },
+      paint: { 'line-color': ['get', 'color'], 'line-width': 4 },
     });
   }
 

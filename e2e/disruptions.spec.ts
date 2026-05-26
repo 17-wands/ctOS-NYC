@@ -33,6 +33,10 @@ test.describe('Disruption annotations', () => {
     await card.click();
     const disruptions = region.getByRole('region', { name: 'DISRUPTIONS' });
     await expect(disruptions).toBeVisible();
+
+    // Progressive disclosure (#43): alert details are hidden until expanded.
+    await expect(disruptions.getByText('Signal problems')).toBeHidden();
+    await disruptions.getByRole('button', { name: /VIEW \d+ DISRUPTION/ }).click();
     await expect(disruptions.getByText('Signal problems')).toBeVisible();
 
     // The itinerary detail must render above the disruption summary (#43).

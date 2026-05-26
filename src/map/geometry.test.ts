@@ -30,12 +30,16 @@ describe('buildRouteTrace', () => {
 
     const trace = buildRouteTrace(itinerary, stopsIndex);
 
-    expect(trace.type).toBe('Feature');
-    expect(trace.geometry.type).toBe('LineString');
-    expect(trace.geometry.coordinates).toHaveLength(2);
+    expect(trace.type).toBe('FeatureCollection');
+    expect(trace.features).toHaveLength(1);
+    const segment = trace.features[0]!;
+    expect(segment.geometry.type).toBe('LineString');
+    expect(segment.geometry.coordinates).toHaveLength(2);
     // Note: StopsIndex uses 0-based array indexing, so stopId 1 → mockStops[1] (14 St)
-    expect(trace.geometry.coordinates[0]).toEqual([-73.989951, 40.734673]); // fromStopId 1 → 14 St
-    expect(trace.geometry.coordinates[1]).toEqual([-73.987495, 40.75529]); // toStopId 2 → Times Sq
+    expect(segment.geometry.coordinates[0]).toEqual([-73.989951, 40.734673]); // fromStopId 1 → 14 St
+    expect(segment.geometry.coordinates[1]).toEqual([-73.987495, 40.75529]); // toStopId 2 → Times Sq
+    // Q is an N/Q/R/W line → MTA yellow.
+    expect(segment.properties?.color).toBe('#fccc0a');
   });
 
   it('builds LineString from multi-leg itinerary', () => {
@@ -80,7 +84,11 @@ describe('buildRouteTrace', () => {
 
     const trace = buildRouteTrace(itinerary, stopsIndex);
 
-    expect(trace.geometry.coordinates).toHaveLength(6); // 3 legs * 2 stops each
+    expect(trace.features).toHaveLength(3); // one segment per leg
+    const totalCoords = trace.features.reduce((n, f) => n + f.geometry.coordinates.length, 0);
+    expect(totalCoords).toBe(6); // 3 legs * 2 stops each
+    // The transfer leg uses the muted connector color, not a line color.
+    expect(trace.features[1]?.properties?.color).toBe('#7d8792');
   });
 });
 

@@ -83,9 +83,18 @@ export function App() {
   };
 
   const handleItinerarySelect = (selectedIndex: number) => {
-    if (routingState.kind === 'results') {
-      setRoutingState({ ...routingState, selectedIndex });
-    }
+    if (routingState.kind !== 'results') return;
+    setRoutingState({ ...routingState, selectedIndex });
+    // Bring the selected itinerary detail into view (it renders below the list,
+    // above the disruptions). Scroll the visible layout's panel — both the
+    // desktop sidebar and the mobile bottom sheet render one.
+    requestAnimationFrame(() => {
+      document.querySelectorAll<HTMLElement>('[aria-label="ITINERARY"]').forEach((panel) => {
+        if (panel.offsetParent !== null) {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
   };
 
   const handleExcludeRoute = (routeShortName: string) => {
