@@ -38,8 +38,14 @@ function formatTimestamp(timestamp: number | Long | null | undefined): string | 
     return null;
   }
 
-  const ms = typeof timestamp === 'number' ? timestamp * 1000 : Number(timestamp) * 1000;
-  return new Date(ms).toISOString();
+  // GTFS-realtime uses 0 (or an absent field) for open-ended periods; treat any
+  // non-positive value as "no timestamp" rather than 1970-01-01.
+  const seconds = typeof timestamp === 'number' ? timestamp : Number(timestamp);
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return null;
+  }
+
+  return new Date(seconds * 1000).toISOString();
 }
 
 /**
