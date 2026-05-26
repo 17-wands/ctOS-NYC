@@ -2,6 +2,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { SECURITY_HEADERS } from './src/security/csp';
 
 const ONE_MONTH_SECONDS = 60 * 60 * 24 * 30;
 
@@ -57,6 +58,8 @@ export default defineConfig({
   preview: {
     port: 4173,
     strictPort: true,
+    // Mirror the production (vercel.json) security headers for local parity.
+    headers: SECURITY_HEADERS,
   },
   test: {
     environment: 'jsdom',
