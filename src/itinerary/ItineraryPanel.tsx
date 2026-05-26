@@ -4,6 +4,7 @@ import { Panel } from '../components/Panel';
 import { Button } from '../components/Button';
 import { Label, Mono } from '../components/Text';
 import { formatTime, formatDuration } from '../routing/time';
+import { lineColor, lineTextColor } from '../routing/lineColors';
 import styles from './ItineraryPanel.module.css';
 
 type ItineraryPanelProps = {
@@ -31,7 +32,13 @@ export function ItineraryPanel({ itinerary, onExcludeRoute, excludedRoutes }: It
               <>
                 <div className={styles.legHeader}>
                   <Label>ROUTE</Label>
-                  <div className={styles.routeBadge}>
+                  <div
+                    className={styles.routeBadge}
+                    style={{
+                      backgroundColor: lineColor(leg.routeShortName || leg.routeName),
+                      color: lineTextColor(leg.routeShortName || leg.routeName),
+                    }}
+                  >
                     <Mono>{leg.routeShortName || leg.routeName}</Mono>
                   </div>
                   <Label>{leg.routeName}</Label>

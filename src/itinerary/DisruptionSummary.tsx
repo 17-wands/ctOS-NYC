@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { AnnotatedItinerary } from '../routing/disruptions';
 import type { Alert } from '../realtime/types';
 import { Panel } from '../components/Panel';
@@ -16,6 +17,8 @@ export function DisruptionSummary({
   onExcludeRoute,
   excludedRoutes,
 }: DisruptionSummaryProps) {
+  const [showDetails, setShowDetails] = useState(false);
+
   // Collect all unique alerts from all legs
   const allAlerts = new Map<string, Alert>();
   const affectedRoutes = new Set<string>();
@@ -34,32 +37,11 @@ export function DisruptionSummary({
   if (allAlerts.size === 0) return null;
 
   const severity = itinerary.worstSeverity || 'warning';
+  const alerts = Array.from(allAlerts.values());
 
   return (
     <Panel title="DISRUPTIONS" severity={severity}>
-      <div className={styles.alerts}>
-        {Array.from(allAlerts.values()).map((alert) => (
-          <div
-            key={alert.id}
-            className={styles.alert}
-            data-severity={
-              alert.severity === 'BREACH'
-                ? 'critical'
-                : alert.severity === 'DEGRADED'
-                  ? 'warning'
-                  : 'info'
-            }
-          >
-            <div className={styles.alertHeader}>
-              <Label>{alert.severity}</Label>
-              <Mono>{alert.header}</Mono>
-            </div>
-            {alert.description && (
-              <div className={styles.alertDescription}>{alert.description}</div>
-            )}
-          </div>
-        ))}
-      </div>
+      {/* Progressive disclosure: lead with what to avoid; details on demand. */}
       {affectedRoutes.size > 0 && onExcludeRoute && (
         <div className={styles.exclusions}>
           <Label>AVOID ROUTES</Label>
@@ -75,6 +57,43 @@ export function DisruptionSummary({
               </Button>
             ))}
           </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className={styles.disclosure}
+        aria-expanded={showDetails}
+        onClick={() => setShowDetails((shown) => !shown)}
+      >
+        {showDetails
+          ? 'HIDE DETAILS'
+          : `VIEW ${alerts.length} DISRUPTION${alerts.length === 1 ? '' : 'S'}`}
+      </button>
+
+      {showDetails && (
+        <div className={styles.alerts}>
+          {alerts.map((alert) => (
+            <div
+              key={alert.id}
+              className={styles.alert}
+              data-severity={
+                alert.severity === 'BREACH'
+                  ? 'critical'
+                  : alert.severity === 'DEGRADED'
+                    ? 'warning'
+                    : 'info'
+              }
+            >
+              <div className={styles.alertHeader}>
+                <Label>{alert.severity}</Label>
+                <Mono>{alert.header}</Mono>
+              </div>
+              {alert.description && (
+                <div className={styles.alertDescription}>{alert.description}</div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </Panel>
