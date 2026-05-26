@@ -90,6 +90,8 @@ app opens, loads, and answers.
   consideration and re-run the plan against the remaining network.
 - **Responsive layout.** One product that works on a phone and a desktop, built
   mobile-first.
+- **Recent trips.** Remember recently planned trips on the device and let the
+  rider re-run one in a tap. Stored only in `localStorage`; never synced.
 
 ## 7. Experience and voice
 
