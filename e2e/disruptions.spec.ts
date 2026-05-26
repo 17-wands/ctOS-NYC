@@ -34,6 +34,12 @@ test.describe('Disruption annotations', () => {
     const disruptions = region.getByRole('region', { name: 'DISRUPTIONS' });
     await expect(disruptions).toBeVisible();
     await expect(disruptions.getByText('Signal problems')).toBeVisible();
+
+    // The itinerary detail must render above the disruption summary (#43).
+    const itinerary = region.getByRole('region', { name: 'ITINERARY' });
+    const itineraryBox = await itinerary.boundingBox();
+    const disruptionsBox = await disruptions.boundingBox();
+    expect(itineraryBox!.y).toBeLessThan(disruptionsBox!.y);
   });
 
   test('shows no annotations when realtime data is empty', async ({ page }) => {

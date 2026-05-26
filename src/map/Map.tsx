@@ -11,6 +11,96 @@ type MapProps = {
   stopsIndex: StopsIndex;
 };
 
+/**
+ * Strip the basemap down to context only, so the route reads as the figure.
+ * The OpenFreeMap "liberty" style ships full streets + POIs + labels; mute every
+ * line, flatten fills toward the background, drop POI/transit icons, and keep
+ * place labels in a muted ash. (DESIGN.md §9: route foregrounded.)
+ */
+function muteBasemap(map: maplibregl.Map): void {
+  const safe = (fn: () => void) => {
+    try {
+      fn();
+    } catch {
+      // Property not applicable to this layer; ignore.
+    }
+  };
+
+  safe(() => map.setPaintProperty('background', 'background-color', '#101317'));
+
+  for (const layer of map.getStyle().layers ?? []) {
+    const id = layer.id;
+    switch (layer.type) {
+      case 'symbol':
+        if (/poi|transit|aerialway|housenumber/i.test(id)) {
+          safe(() => map.setLayoutProperty(id, 'visibility', 'none'));
+        } else {
+          safe(() => map.setPaintProperty(id, 'text-color', '#8b95a0'));
+          safe(() => map.setPaintProperty(id, 'text-halo-color', '#050608'));
+          safe(() => map.setPaintProperty(id, 'icon-opacity', 0));
+        }
+        break;
+      case 'line':
+        safe(() => map.setPaintProperty(id, 'line-color', '#2a3139'));
+        safe(() => map.setPaintProperty(id, 'line-opacity', 0.5));
+        break;
+      case 'fill':
+        safe(() => map.setPaintProperty(id, 'fill-color', '#0c0f13'));
+        break;
+      case 'fill-extrusion':
+        safe(() => map.setLayoutProperty(id, 'visibility', 'none'));
+        break;
+    }
+  }
+
+  for (const water of ['water', 'waterway']) {
+    safe(() => map.setPaintProperty(water, 'fill-color', '#050608'));
+  }
+}
+
+/** Add or update the route trace, station markers, and viewport for an itinerary. */
+function drawItinerary(map: maplibregl.Map, itinerary: Itinerary, stopsIndex: StopsIndex): void {
+  const routeTrace = buildRouteTrace(itinerary, stopsIndex);
+  const stationMarkers = buildStationMarkers(itinerary, stopsIndex);
+  const bounds = calculateRouteBounds(itinerary, stopsIndex);
+
+  const routeSource = map.getSource('route') as maplibregl.GeoJSONSource | undefined;
+  if (routeSource) {
+    routeSource.setData(routeTrace);
+  } else {
+    map.addSource('route', { type: 'geojson', data: routeTrace });
+    map.addLayer({
+      id: 'route-line',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#39c7f3', 'line-width': 4 },
+    });
+  }
+
+  const stationsSource = map.getSource('stations') as maplibregl.GeoJSONSource | undefined;
+  if (stationsSource) {
+    stationsSource.setData(stationMarkers);
+  } else {
+    map.addSource('stations', { type: 'geojson', data: stationMarkers });
+    map.addLayer({
+      id: 'station-markers',
+      type: 'circle',
+      source: 'stations',
+      paint: {
+        'circle-color': '#39c7f3',
+        'circle-radius': 6,
+        'circle-stroke-color': '#e8eef2',
+        'circle-stroke-width': 2,
+      },
+    });
+  }
+
+  if (bounds) {
+    map.fitBounds(bounds, { padding: 48, maxZoom: 14 });
+  }
+}
+
 export function Map({ itinerary, stopsIndex }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -24,32 +114,7 @@ export function Map({ itinerary, stopsIndex }: MapProps) {
       center: [-73.98, 40.75],
       zoom: 12,
     });
-
-    map.on('load', () => {
-      map.setPaintProperty('background', 'background-color', '#101317');
-
-      const waterLayers = ['water', 'waterway'];
-      waterLayers.forEach((layer) => {
-        if (map.getLayer(layer)) {
-          map.setPaintProperty(layer, 'fill-color', '#050608');
-        }
-      });
-
-      const roadLayers = ['road', 'highway', 'road_major', 'road_minor'];
-      roadLayers.forEach((layer) => {
-        if (map.getLayer(layer)) {
-          map.setPaintProperty(layer, 'line-color', '#2A3139');
-        }
-      });
-
-      const textLayers = map.getStyle().layers?.filter((l) => l.type === 'symbol') || [];
-      textLayers.forEach((layer) => {
-        if (map.getLayer(layer.id)) {
-          map.setPaintProperty(layer.id, 'text-color', '#7D8792');
-        }
-      });
-    });
-
+    map.on('load', () => muteBasemap(map));
     mapRef.current = map;
 
     return () => {
@@ -62,55 +127,26 @@ export function Map({ itinerary, stopsIndex }: MapProps) {
     const map = mapRef.current;
     if (!map) return;
 
-    map.on('load', () => {
-      const routeTrace = buildRouteTrace(itinerary, stopsIndex);
-      const stationMarkers = buildStationMarkers(itinerary, stopsIndex);
-      const bounds = calculateRouteBounds(itinerary, stopsIndex);
-
-      if (map.getSource('route')) {
-        (map.getSource('route') as maplibregl.GeoJSONSource).setData(routeTrace);
-      } else {
-        map.addSource('route', {
-          type: 'geojson',
-          data: routeTrace,
-        });
-
-        map.addLayer({
-          id: 'route-line',
-          type: 'line',
-          source: 'route',
-          paint: {
-            'line-color': '#39C7F3',
-            'line-width': 4,
-          },
-        });
+    let cancelled = false;
+    const draw = () => {
+      if (!cancelled && map.isStyleLoaded()) {
+        drawItinerary(map, itinerary, stopsIndex);
       }
+    };
 
-      if (map.getSource('stations')) {
-        (map.getSource('stations') as maplibregl.GeoJSONSource).setData(stationMarkers);
-      } else {
-        map.addSource('stations', {
-          type: 'geojson',
-          data: stationMarkers,
-        });
+    // Run immediately if the style is ready (e.g. re-selecting an itinerary);
+    // otherwise wait for the one-time load. `on('load')` added after load never
+    // fires, which previously left the map stale on re-selection.
+    if (map.isStyleLoaded()) {
+      draw();
+    } else {
+      map.once('load', draw);
+    }
 
-        map.addLayer({
-          id: 'station-markers',
-          type: 'circle',
-          source: 'stations',
-          paint: {
-            'circle-color': '#39C7F3',
-            'circle-radius': 6,
-            'circle-stroke-color': '#E8EEF2',
-            'circle-stroke-width': 2,
-          },
-        });
-      }
-
-      if (bounds) {
-        map.fitBounds(bounds, { padding: 40 });
-      }
-    });
+    return () => {
+      cancelled = true;
+      map.off('load', draw);
+    };
   }, [itinerary, stopsIndex]);
 
   return <div ref={containerRef} className={styles.container} data-testid="map-container" />;
