@@ -104,3 +104,12 @@
   color: var(--color-ash);
   text-align: center;
 }
+
+.noResultsHint {
+  margin-top: var(--space-1);
+  color: var(--color-ash);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm);
+  text-transform: none;
+}

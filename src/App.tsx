@@ -249,6 +249,9 @@ function renderMain(
           itineraries={annotatedItineraries}
           onSelect={onItinerarySelect}
           selectedIndex={routingState.selectedIndex}
+          exclusionsActive={
+            exclusionState.excludedRoutes.size > 0 || exclusionState.excludedStops.size > 0
+          }
         />
         {routingState.selectedIndex !== undefined &&
           annotatedItineraries[routingState.selectedIndex] && (

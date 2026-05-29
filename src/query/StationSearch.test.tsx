@@ -245,8 +245,11 @@ describe('StationSearch', () => {
     // Search for something that definitely won't match
     fireEvent.change(input, { target: { value: 'ZZZZZZZZZ' } });
 
+    // The dropdown opens and shows the empty-state copy + hint.
     await waitFor(() => {
-      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
     });
+    expect(screen.getByText('NO STATIONS FOUND')).toBeInTheDocument();
+    expect(screen.getByText(/Try a partial name/i)).toBeInTheDocument();
   });
 });
