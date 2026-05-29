@@ -9,13 +9,24 @@ type ItineraryListProps = {
   itineraries: (Itinerary | AnnotatedItinerary)[];
   onSelect: (index: number) => void;
   selectedIndex?: number;
+  /** Whether the rider has active route/stop exclusions; surfaces a helper line. */
+  exclusionsActive?: boolean;
 };
 
-export function ItineraryList({ itineraries, onSelect, selectedIndex }: ItineraryListProps) {
+export function ItineraryList({
+  itineraries,
+  onSelect,
+  selectedIndex,
+  exclusionsActive = false,
+}: ItineraryListProps) {
   if (itineraries.length === 0) {
+    const help = exclusionsActive
+      ? 'Some routes or stops are excluded. Clear the exclusions or try a different time.'
+      : 'Try a different departure time, or check disruptions for the affected lines.';
     return (
       <div className={styles.empty}>
         <Label>NO ROUTES FOUND</Label>
+        <p className={styles.emptyHelp}>{help}</p>
       </div>
     );
   }

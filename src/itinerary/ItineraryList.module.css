@@ -101,3 +101,10 @@
   text-align: center;
   color: var(--color-ash);
 }
+
+.emptyHelp {
+  margin: var(--space-2) 0 0;
+  color: var(--color-ash);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm);
+}

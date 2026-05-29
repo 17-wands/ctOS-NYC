@@ -48,7 +48,9 @@ export function StationSearch({
           .findStopsByName(query, 8)
           .filter((stop) => stop.locationType === 'STATION');
         setResults(stops);
-        setIsOpen(stops.length > 0);
+        // Open the dropdown for any non-empty query so the "no stations found"
+        // hint surfaces instead of silently showing nothing.
+        setIsOpen(true);
         setSelectedIndex(-1);
       }, 200);
       debouncedFn();
@@ -156,7 +158,14 @@ export function StationSearch({
       {error && <div className={styles.error}>{error}</div>}
       {isOpen && (
         <div ref={dropdownRef} id={`${id}-dropdown`} role="listbox" className={styles.dropdown}>
-          {results.length === 0 && <div className={styles.noResults}>NO STATIONS FOUND</div>}
+          {results.length === 0 && (
+            <div className={styles.noResults}>
+              <div>NO STATIONS FOUND</div>
+              <div className={styles.noResultsHint}>
+                Try a partial name like “14 St” or “Times”.
+              </div>
+            </div>
+          )}
           {results.map((stop, index) => (
             <button
               key={stop.id}

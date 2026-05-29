@@ -74,6 +74,24 @@ describe('ErrorState', () => {
 
     const region = screen.getByRole('region', { name: 'ROUTING SUBSYSTEM FAULT' });
     expect(within(region).getByText('LINK:OFFLINE')).toBeInTheDocument();
-    expect(within(region).getByText(/NO CACHED SCHEDULE/)).toBeInTheDocument();
+    expect(within(region).getByText(/CACHED PLANNER UNAVAILABLE/)).toBeInTheDocument();
+  });
+
+  it('renders a stage-specific hint for an online fetch failure', () => {
+    render(<ErrorState error={new TimetableLoadError('fetch', 'HTTP 503')} timestamp="t" />);
+
+    expect(screen.getByText(/SCHEDULE SERVICE UNREACHABLE/)).toBeInTheDocument();
+  });
+
+  it('renders a stage-specific hint for a decode failure', () => {
+    render(<ErrorState error={new TimetableLoadError('deserialize', 'bad bytes')} timestamp="t" />);
+
+    expect(screen.getByText(/SCHEDULE DATA CORRUPT/)).toBeInTheDocument();
+  });
+
+  it('renders a stage-specific hint for a router failure', () => {
+    render(<ErrorState error={new TimetableLoadError('router', 'init failed')} timestamp="t" />);
+
+    expect(screen.getByText(/PLANNER FAILED TO START/)).toBeInTheDocument();
   });
 });

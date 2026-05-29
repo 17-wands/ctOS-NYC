@@ -20,6 +20,25 @@ const STAGE_LABELS: Record<LoadStage, string> = {
 };
 
 /**
+ * Actionable, voice-on-brand hint per failure. Offline takes precedence —
+ * there's nothing cached, so a reload won't help until the connection is back.
+ */
+function buildHint(error: TimetableLoadError | Error, offline: boolean): string {
+  if (offline) return 'NO CONNECTION // CACHED PLANNER UNAVAILABLE — RECONNECT TO RETRY';
+  if (error instanceof TimetableLoadError) {
+    switch (error.stage) {
+      case 'fetch':
+        return 'SCHEDULE SERVICE UNREACHABLE // CHECK CONNECTION OR RELOAD';
+      case 'deserialize':
+        return 'SCHEDULE DATA CORRUPT // RELOAD TO RETRY';
+      case 'router':
+        return 'PLANNER FAILED TO START // RELOAD TO RETRY';
+    }
+  }
+  return 'SYSTEM HALTED // RELOAD TO RETRY';
+}
+
+/**
  * Factual fault screen rendered when the timetable load fails. Uses the
  * critical (BREACH) severity rail per DESIGN.md §8 and reports the stage,
  * message, and timestamp without diagnostic narration.
@@ -31,9 +50,7 @@ export function ErrorState({ error, timestamp, offline = false }: ErrorStateProp
     : error instanceof TimetableLoadError
       ? STAGE_LABELS[error.stage]
       : 'STAGE:UNKNOWN';
-  const hint = offline
-    ? 'OFFLINE // NO CACHED SCHEDULE — RECONNECT TO LOAD'
-    : 'SYSTEM HALTED // RELOAD TO RETRY';
+  const hint = buildHint(error, offline);
 
   return (
     <Panel

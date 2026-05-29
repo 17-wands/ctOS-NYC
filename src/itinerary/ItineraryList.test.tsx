@@ -125,10 +125,19 @@ describe('ItineraryList', () => {
     expect(items[1]).toHaveAttribute('data-selected', 'true');
   });
 
-  it('renders empty state when no itineraries', () => {
+  it('renders empty state with the generic helper when no itineraries', () => {
     const onSelect = vi.fn();
     render(<ItineraryList itineraries={[]} onSelect={onSelect} />);
 
     expect(screen.getByText('NO ROUTES FOUND')).toBeInTheDocument();
+    expect(screen.getByText(/Try a different departure time/i)).toBeInTheDocument();
+  });
+
+  it('surfaces an exclusions-aware helper when exclusions are active', () => {
+    const onSelect = vi.fn();
+    render(<ItineraryList itineraries={[]} onSelect={onSelect} exclusionsActive />);
+
+    expect(screen.getByText('NO ROUTES FOUND')).toBeInTheDocument();
+    expect(screen.getByText(/Some routes or stops are excluded/i)).toBeInTheDocument();
   });
 });
