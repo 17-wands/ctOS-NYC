@@ -33,53 +33,73 @@ export function ItineraryList({
 
   return (
     <div className={styles.list}>
-      {itineraries.map((itinerary, index) => (
-        <button
-          key={index}
-          className={styles.item}
-          data-selected={index === selectedIndex}
-          data-severity={'worstSeverity' in itinerary ? itinerary.worstSeverity : undefined}
-          onClick={() => onSelect(index)}
-          type="button"
-        >
-          <div className={styles.times}>
-            <div className={styles.time}>
-              <Mono>{formatTime(itinerary.departureTime)}</Mono>
+      {itineraries.map((itinerary, index) => {
+        const fromStopName = itinerary.legs[0]?.fromStopName;
+        const toStopName = itinerary.legs[itinerary.legs.length - 1]?.toStopName;
+        const transferLabel =
+          itinerary.transferCount === 1 ? '1 TRANSFER' : `${itinerary.transferCount} TRANSFERS`;
+
+        return (
+          <button
+            key={index}
+            data-testid="itinerary-card"
+            className={styles.item}
+            data-selected={index === selectedIndex}
+            data-severity={'worstSeverity' in itinerary ? itinerary.worstSeverity : undefined}
+            onClick={() => onSelect(index)}
+            type="button"
+          >
+            <div className={styles.headline}>
+              <div className={styles.timeRange}>
+                <Mono>{formatTime(itinerary.departureTime)}</Mono>
+                <span className={styles.arrow} aria-hidden="true">
+                  →
+                </span>
+                <Mono>{formatTime(itinerary.arrivalTime)}</Mono>
+              </div>
+              <div className={styles.durationBlock}>
+                <Label>DURATION</Label>
+                <span className={styles.duration}>
+                  <Mono>{formatDuration(itinerary.totalDuration)}</Mono>
+                </span>
+              </div>
             </div>
-            <div className={styles.arrow}>→</div>
-            <div className={styles.time}>
-              <Mono>{formatTime(itinerary.arrivalTime)}</Mono>
-            </div>
-          </div>
-          <div className={styles.meta}>
-            <Label>DURATION</Label>
-            <Mono>{formatDuration(itinerary.totalDuration)}</Mono>
-            {itinerary.transferCount > 0 && (
-              <>
-                <Label>TRANSFERS</Label>
-                <Mono>{itinerary.transferCount}</Mono>
-              </>
+
+            {fromStopName && toStopName && (
+              <div className={styles.endpoints}>
+                <span className={styles.endpoint}>{fromStopName}</span>
+                <span className={styles.arrow} aria-hidden="true">
+                  →
+                </span>
+                <span className={styles.endpoint}>{toStopName}</span>
+              </div>
             )}
-          </div>
-          <div className={styles.legs}>
-            {itinerary.legs
-              .filter((leg) => leg.type === 'vehicle')
-              .map((leg, legIndex) => {
-                const route = leg.routeShortName || leg.routeName;
-                return (
-                  <div key={legIndex} className={styles.route}>
-                    <div
-                      className={styles.routeBadge}
-                      style={{ backgroundColor: lineColor(route), color: lineTextColor(route) }}
-                    >
-                      <Mono>{route}</Mono>
+
+            <div className={styles.legs}>
+              {itinerary.legs
+                .filter((leg) => leg.type === 'vehicle')
+                .map((leg, legIndex) => {
+                  const route = leg.routeShortName || leg.routeName;
+                  return (
+                    <div key={legIndex} className={styles.route}>
+                      <div
+                        className={styles.routeBadge}
+                        style={{ backgroundColor: lineColor(route), color: lineTextColor(route) }}
+                      >
+                        <Mono>{route}</Mono>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-          </div>
-        </button>
-      ))}
+                  );
+                })}
+              {itinerary.transferCount > 0 && (
+                <span className={styles.transfers}>
+                  <Label>{transferLabel}</Label>
+                </span>
+              )}
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }
