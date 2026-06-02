@@ -92,8 +92,17 @@ describe('ItineraryList', () => {
     expect(screen.getAllByText('DURATION')).toHaveLength(2);
     expect(screen.getByText('30M')).toBeInTheDocument();
     expect(screen.getByText('35M')).toBeInTheDocument();
-    expect(screen.getByText('TRANSFERS')).toBeInTheDocument();
-    expect(screen.getByText('1')).toBeInTheDocument();
+    // Transfer count appears only when > 0, as a compact inline tag.
+    expect(screen.getByText('1 TRANSFER')).toBeInTheDocument();
+  });
+
+  it('shows the origin and destination stops for each itinerary', () => {
+    const onSelect = vi.fn();
+    render(<ItineraryList itineraries={mockItineraries} onSelect={onSelect} />);
+
+    expect(screen.getAllByText('59 St - Columbus Circle')).toHaveLength(2);
+    expect(screen.getByText('14 St - Union Sq')).toBeInTheDocument();
+    expect(screen.getByText('Atlantic Av-Barclays Ctr')).toBeInTheDocument();
   });
 
   it('shows route badges for vehicle legs', () => {
