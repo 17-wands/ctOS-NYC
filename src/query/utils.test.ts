@@ -82,16 +82,17 @@ describe('roundToNextFiveMinutes', () => {
 });
 
 describe('formatDateTimeLocal', () => {
-  it('formats a date in YYYY-MM-DDTHH:MM format', () => {
-    const date = new Date('2026-05-20T14:22:37.123Z');
+  it('returns the local wall-clock time, not UTC', () => {
+    // Use the local-time constructor so the expected values are always the same
+    // regardless of the test runner's timezone.
+    const date = new Date(2026, 4, 20, 14, 22, 37, 123); // May 20 2026, 2:22 PM local
     const formatted = formatDateTimeLocal(date);
     expect(formatted).toBe('2026-05-20T14:22');
   });
 
-  it('preserves timezone when formatting (returns UTC)', () => {
-    const date = new Date('2026-01-15T09:05:00.000Z');
-    const formatted = formatDateTimeLocal(date);
-    expect(formatted).toBe('2026-01-15T09:05');
+  it('zero-pads single-digit months, days, hours, and minutes', () => {
+    const date = new Date(2026, 0, 5, 9, 5, 0, 0); // Jan 5, 09:05 local
+    expect(formatDateTimeLocal(date)).toBe('2026-01-05T09:05');
   });
 });
 
@@ -99,22 +100,25 @@ describe('parseDateTimeLocal', () => {
   it('parses a datetime-local string to a Date', () => {
     const str = '2026-05-20T14:22';
     const parsed = parseDateTimeLocal(str);
-    // datetime-local treats the string as local time, so we just verify it parses
+    // datetime-local strings have no timezone designator → local time
     expect(parsed).toBeInstanceOf(Date);
     expect(parsed.getFullYear()).toBe(2026);
     expect(parsed.getMonth()).toBe(4); // May is month 4 (0-indexed)
     expect(parsed.getDate()).toBe(20);
+    expect(parsed.getHours()).toBe(14);
+    expect(parsed.getMinutes()).toBe(22);
   });
 
-  it('formats to a string that parseDateTimeLocal can read', () => {
-    const original = new Date('2026-05-20T14:22:00.000Z');
+  it('roundtrips through formatDateTimeLocal without changing the wall-clock time', () => {
+    // Local-time constructor ensures this test is timezone-agnostic.
+    const original = new Date(2026, 4, 20, 14, 22, 0, 0);
     const formatted = formatDateTimeLocal(original);
-    // Verify format is correct for datetime-local input
-    expect(formatted).toBe('2026-05-20T14:22');
-    // Verify it can be parsed back (may differ due to timezone)
     const parsed = parseDateTimeLocal(formatted);
-    expect(parsed).toBeInstanceOf(Date);
-    expect(isNaN(parsed.getTime())).toBe(false);
+    expect(parsed.getFullYear()).toBe(original.getFullYear());
+    expect(parsed.getMonth()).toBe(original.getMonth());
+    expect(parsed.getDate()).toBe(original.getDate());
+    expect(parsed.getHours()).toBe(original.getHours());
+    expect(parsed.getMinutes()).toBe(original.getMinutes());
   });
 });
 

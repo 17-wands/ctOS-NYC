@@ -32,14 +32,22 @@ export function roundToNextFiveMinutes(date: Date): Date {
 }
 
 /**
- * Formats a Date for use with datetime-local input.
- * Returns ISO 8601 format truncated to minutes: YYYY-MM-DDTHH:MM
+ * Formats a Date for use with a `datetime-local` input.
+ *
+ * `datetime-local` values are interpreted as **local (wall-clock) time**, not
+ * UTC. Using `toISOString()` here would display the wrong hour for any user
+ * outside UTC. We use local date-getters so the input always shows the correct
+ * local time.
  *
  * @param date - The date to format
- * @returns Formatted string for datetime-local input
+ * @returns Local-time string in `YYYY-MM-DDTHH:MM` format
  */
 export function formatDateTimeLocal(date: Date): string {
-  return date.toISOString().slice(0, 16);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  );
 }
 
 /**
