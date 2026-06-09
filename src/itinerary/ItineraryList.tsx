@@ -2,7 +2,7 @@ import type { Itinerary } from '../routing/types';
 import type { AnnotatedItinerary } from '../routing/disruptions';
 import { Label, Mono } from '../components/Text';
 import { formatTime, formatDuration } from '../routing/time';
-import { lineColor, lineTextColor } from '../routing/lineColors';
+import { lineColor, lineTextColor, lineDivision } from '../routing/lineColors';
 import styles from './ItineraryList.module.css';
 
 type ItineraryListProps = {
@@ -80,14 +80,21 @@ export function ItineraryList({
                 .filter((leg) => leg.type === 'vehicle')
                 .map((leg, legIndex) => {
                   const route = leg.routeShortName || leg.routeName;
+                  const division = lineDivision(route);
                   return (
                     <div key={legIndex} className={styles.route}>
                       <div
                         className={styles.routeBadge}
                         style={{ backgroundColor: lineColor(route), color: lineTextColor(route) }}
+                        title={division ? `${route} · ${division}` : (route ?? undefined)}
                       >
                         <Mono>{route}</Mono>
                       </div>
+                      {division && (
+                        <span className={styles.divisionLabel} aria-hidden="true">
+                          <Mono>{division}</Mono>
+                        </span>
+                      )}
                     </div>
                   );
                 })}

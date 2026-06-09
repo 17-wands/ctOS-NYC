@@ -35,12 +35,6 @@
   color: var(--color-ash);
 }
 
-.selectedId {
-  margin-top: -4px;
-  font-size: 13px;
-  color: var(--color-ash);
-}
-
 .error {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;

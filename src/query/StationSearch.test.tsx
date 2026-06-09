@@ -192,7 +192,7 @@ describe('StationSearch', () => {
     });
   });
 
-  it('displays selected stop name and ID', () => {
+  it('displays selected stop name in the input', () => {
     const selectedStop = mockStops[0];
     if (!selectedStop) throw new Error('Test fixture missing'); // 59 St - Columbus Circle
 
@@ -207,8 +207,10 @@ describe('StationSearch', () => {
       />,
     );
 
+    // The input should show the station name; raw source stop IDs are not displayed
+    // to avoid confusing commuters with internal GTFS identifiers like "A24".
     expect(screen.getByDisplayValue('59 St - Columbus Circle')).toBeInTheDocument();
-    expect(screen.getByText('A24')).toBeInTheDocument();
+    expect(screen.queryByText('A24')).not.toBeInTheDocument();
   });
 
   it('shows error message when error prop is provided', () => {

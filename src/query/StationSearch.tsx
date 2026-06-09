@@ -44,9 +44,22 @@ export function StationSearch({
           setIsOpen(false);
           return;
         }
+        // Fetch extra candidates so we have enough after name-deduplication.
+        // Multiple GTFS parent-station entries can share the same display name
+        // (e.g. the IRT 1/2/3 and BMT/IND N/Q/R/W complexes at Times Sq both
+        // appear as "Times Sq-42 St"). Deduplicate by normalised name so
+        // commuters see one row per station, not one row per GTFS ID.
+        const seen = new Set<string>();
         const stops = stopsIndex
-          .findStopsByName(query, 8)
-          .filter((stop) => stop.locationType === 'STATION');
+          .findStopsByName(query, 20)
+          .filter((stop) => stop.locationType === 'STATION')
+          .filter((stop) => {
+            const key = stop.name.toLowerCase().trim();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          })
+          .slice(0, 8);
         setResults(stops);
         // Open the dropdown for any non-empty query so the "no stations found"
         // hint surfaces instead of silently showing nothing.
@@ -150,11 +163,6 @@ export function StationSearch({
         aria-activedescendant={selectedIndex >= 0 ? `${id}-option-${selectedIndex}` : undefined}
         data-error={error ? 'true' : undefined}
       />
-      {value && (
-        <div className={styles.selectedId}>
-          <Mono>{value.sourceStopId}</Mono>
-        </div>
-      )}
       {error && <div className={styles.error}>{error}</div>}
       {isOpen && (
         <div ref={dropdownRef} id={`${id}-dropdown`} role="listbox" className={styles.dropdown}>

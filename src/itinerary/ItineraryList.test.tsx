@@ -114,6 +114,15 @@ describe('ItineraryList', () => {
     expect(screen.getByText('N')).toBeInTheDocument();
   });
 
+  it('shows division labels below route badges', () => {
+    const onSelect = vi.fn();
+    render(<ItineraryList itineraries={mockItineraries} onSelect={onSelect} />);
+
+    // Q → BMT, 4 → IRT, N → BMT (two BMT labels for the two-leg itinerary)
+    expect(screen.getByText('IRT')).toBeInTheDocument();
+    expect(screen.getAllByText('BMT')).toHaveLength(2);
+  });
+
   it('calls onSelect when an itinerary is clicked', () => {
     const onSelect = vi.fn();
     render(<ItineraryList itineraries={mockItineraries} onSelect={onSelect} />);
