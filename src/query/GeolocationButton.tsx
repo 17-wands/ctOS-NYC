@@ -19,7 +19,7 @@ const ERROR_MESSAGES: Record<GeolocationError, { text: string; severity: 'critic
     'permission-denied': { text: 'LOCATION ACCESS DENIED', severity: 'critical' },
     'position-unavailable': { text: 'POSITION UNAVAILABLE', severity: 'warning' },
     timeout: { text: 'LOCATION TIMEOUT', severity: 'warning' },
-    'no-stops-found': { text: 'NO STATIONS WITHIN 0.5 KM', severity: 'warning' },
+    'no-stops-found': { text: 'NO STATIONS WITHIN 1.5 KM', severity: 'warning' },
   };
 
 /**
@@ -51,7 +51,7 @@ export function GeolocationButton({
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        const stops = stopsIndex.findStopsByLocation(latitude, longitude, 1, 0.5);
+        const stops = stopsIndex.findStopsByLocation(latitude, longitude, 1, 1.5);
 
         if (stops.length === 0 || !stops[0]) {
           const error: GeolocationError = 'no-stops-found';

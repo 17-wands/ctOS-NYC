@@ -125,6 +125,16 @@
 
 .route {
   display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.divisionLabel {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--color-ash);
+  line-height: 1;
 }
 
 .routeBadge {
